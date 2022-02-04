@@ -1,0 +1,7 @@
+- [ ] Research search algorithm papers
+- [ ] Research klotski and peg solitaire papers
+- [ ] Code basic peg solitaire
+- [ ] Code basic klotski
+- [ ] Apply different search algorithms
+- [ ] Measure run time and memory usage of the search algorithms
+- [ ] Repeat for harder versions of those puzzles such as two-player versions
