@@ -1,3 +1,6 @@
+Project to apply search algorithms for peg solitaire and klotski puzzles.
+
+# To-do
 - [ ] Research search algorithm papers
 - [ ] Research klotski and peg solitaire papers
 - [ ] Reseach and come up with heuristics
