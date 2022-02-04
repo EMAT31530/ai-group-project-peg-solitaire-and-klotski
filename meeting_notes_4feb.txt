@@ -1,0 +1,17 @@
+
+Games: 
+
+peg solitaire -> 2-player peg solitaire
+klotski (same size tiles) -> regular klotski -> (potentially 2-player klotski)
+finally: more complicated 2-player game (minimax)
+
+- We shall look at base cases, and expand from there.
+- Develop heuristics.
+
+Search:
+
+- BFS
+- Monte Carlo tree search
+- Iterative deepening DFS
+- A* search
+
