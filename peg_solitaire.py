@@ -10,6 +10,8 @@ board_1 = np.array([
 	[2,2,1,1,1,2,2],
 	])
 
+print(board_1)
+
 def find_moves(board, y, x):
 	moves = []
 	vectors = [(2, 0), (-2, 0), (0, -2), (0, 2)]
@@ -38,10 +40,20 @@ def possible_moves(board):
 
 	return possible_moves
 
-	
-
-print("\n")
 print(possible_moves(board_1))
 
+def update_board(board, y_old, x_old, y_new, x_new):
+	
+	
+	board[y_old][x_old] = 0
+	board[y_new][x_new] = 1
+	board[(y_old + y_new) // 2][(x_old + x_new) // 2] = 0
 
+	return board
+
+board_2 = update_board(board_1, 1, 3, 3, 3)
+
+print(board_2)
+
+print(possible_moves(board_2))
 
