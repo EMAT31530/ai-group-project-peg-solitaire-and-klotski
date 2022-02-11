@@ -27,5 +27,5 @@ def find_moves(board, y, x):
 
 	return possible_moves
 
-print(find_moves(board_1, 3, 3))
+print(find_moves(board_1, 3, 1))
 
