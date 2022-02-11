@@ -9,3 +9,12 @@ Project to apply search algorithms for peg solitaire and klotski puzzles.
 - [ ] Apply different search algorithms
 - [ ] Measure run time and memory usage of the search algorithms
 - [ ] Repeat for harder versions of those puzzles such as two-player versions
+
+Seach Algorithms 
+- [ ] Breadth first 
+- [ ] Iterative deepening
+- [ ] Uniform cost
+- [ ] A* graph (not tree)
+- [ ] Bidirectional 
+- [ ] Monte Carlo tree
+- [ ] Minimax with Alpha-Beta Pruning (for two-player)
