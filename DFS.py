@@ -107,7 +107,7 @@ def knexts(klotd, r, c):
     return ret
 
 
-# 给定一个棋局，返回该棋局的所有下一步可能的棋局(子棋局)
+# For a given board, return any possibilities of next step
 def kchilds(klotd):
     ret = []
     cuk = np.asarray(klotd)
@@ -120,23 +120,23 @@ def kchilds(klotd):
                 ret.extend(childs)
     return ret
 
-# 给定一个棋局(仅数据部分，不要name)，返回解法
-# 返回一个列表，从前往后每一个元素是一步对应的棋局
+
+# Return a list, each elements in steps represents each step
 def ksolute(klotd):
 
-    # 产生的棋局库, # 为了后续查找方便，使用一维列表存储，
+    # Storage in 1d array
     kdbs = [klotd]
-    # 同时用一个列表来记录父子关系，用一个列表记录每一层的首元素索引
+    # order the list, prodece an index
     prts = [-1]
     idxs = [0]
 
-    # 开始穷举，过程中删除库或对称库中已有棋局
+    # start DFS
     finish = -1
     steps = 0
     t1 = t2 = t3 = 0
     while True:
         
-        # 对当前层所有棋局进行判断, 有完成的则退出
+        # For loop to check any possibility
         for i in xrange(idxs[-1], len(kdbs)):
             if kdbs[i][3][1] == K:
                 finish = i
@@ -145,14 +145,13 @@ def ksolute(klotd):
         if finish != -1:
             break
 
-        # 如果当前层没有已完成的棋局, 则生成下一层
+        # If not finish
         slip = idxs[-2] if (len(idxs)>=2) else idxs[-1]
         child = []
         endi = len(kdbs)
         for i in xrange(idxs[-1], endi):
             child = kchilds(kdbs[i])
-            # 过滤生成子棋局, 若与棋局库中重复则删除, 否则入库
-            # 只搜索最近2层, 因为如果再往前层里有过该局，那该局的父节点不会存在
+            # Filtering any already existed possible steps
             for k in child:
                 if k in kdbs[slip:]:
                     continue
@@ -162,7 +161,7 @@ def ksolute(klotd):
         idxs.append(endi)
         steps += 1
 
-    # 回溯，找到完整的过程并记录
+    # record the whole process
     ret = [kdbs[finish]]
     while finish != 0:
         finish = prts[finish]
@@ -180,16 +179,9 @@ if __name__ == '__main__':
     
     src = chrs[1]['data']
     kdisplay(src)
-    #src = np.asarray(data)
     time_start = time.time()
     ret = ksolute(src)
     time_end = time.time()
     print('Totally cast: %f s, %d steps', time_end - time_start, len(ret))
-    #_ = raw_input('Please press anykey to display steps...')
-    #ret = knexts(klot, 1, 1)
-    #ret = kchilds(klot)
-    #for k in ret:
-    #    os.system('cls')
-    #    kdisplay(k)
-    #    time.sleep(1)
+
 
