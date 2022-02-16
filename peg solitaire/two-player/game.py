@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from logging import raiseExceptions
 
 @dataclass 
 class State():
@@ -35,15 +36,16 @@ class State():
                 nth_bit = 1 << n
                 if BOARD_BIMASK & nth_bit:
                     peg = (self.bitboard1 & nth_bit and 1) + 2*(self.bitboard2 & nth_bit and 1)
-                    match peg:
-                            case 0:
-                                output_row += '\033[39m o'
-                            case 1:
+                    if peg == 0:
+                        output_row += '\033[39m o'
+                    elif peg == 1:
                                 output_row += '\033[34m o'
-                            case 2:
-                                output_row += '\033[31m o'  
+                    elif peg == 2:
+                        output_row += '\033[31m o'
+                    else:
+                        raise ValueError('State not valid') 
                 else:
-                    output_row+='\033[39m -'
+                    output_row+='\033[39m  '
             print(output_row)
         return
 
