@@ -1,38 +1,48 @@
 from dataclasses import dataclass
-from logging import raiseExceptions
 
 @dataclass 
 class State():
     '''Representation of the board game in binary.'''
-    bitboard1: int = 161107674112
+    bitboard1: int = 9552747565056 #161107674112
     '''
-    0000000
-    0000100
-    1011000
-    0010110
-    0010000
-    0001000
-    0000000
+    00000000
+    00001000
+    10110000
+    00101100
+    00100000
+    00010000
+    00000000
     '''
-    bitboard2: int = 106103477157904
+    bitboard2: int = 13546001516593184 #106103477157904
     '''
-    0011000
-    0010000
-    0000010
-    0100000
-    1000011
-    0000000
-    0010000
+    00110000
+    00100000
+    00000100
+    01000000
+    10000110
+    00000000
+    00100000
     '''
-    def possible_moves(self) -> int:
+    def possible_moves(self, player: bool, direction: str) -> int:
         '''Find all possible next moves given the state.'''
-        return
+        if player:
+            friendly_bits, enemy_bits = self.bitboard1, self.bitboard2
+        else: 
+            friendly_bits, enemy_bits = self.bitboard2, self.bitboard1
+
+        overlap = self.bitboard1 | self.bitboard2
+        directions = {'N': -8, 'E': 1, 'S': 8, 'W': -1}
+        d = directions[direction]
+        adjacent_pegs = int(friendly_bits * 2**d) & overlap
+        end = int(adjacent_pegs * 2**d) & ~friendly_bits & BOARD_BIMASK
+        start = int(end * 2**-(2*d)) & BOARD_BIMASK
+        return start
     
     def render(self) -> None:
         '''Process and print the current state to the terminal.'''
-        for row in range(WIDTH):
+        for row in range(ROWS):
             output_row = ''
-            for n in range(HEIGHT*row,HEIGHT*row+HEIGHT):
+            for n in range(COLS*row,COLS*row+COLS):
                 nth_bit = 1 << n
                 if BOARD_BIMASK & nth_bit:
                     peg = (self.bitboard1 & nth_bit and 1) + 2*(self.bitboard2 & nth_bit and 1)
@@ -47,6 +57,7 @@ class State():
                 else:
                     output_row+='\033[39m  '
             print(output_row)
+        print('\n')
         return
 
 class Solitaire2():
@@ -78,19 +89,20 @@ class Solitaire2():
     
 def main():
     game = Solitaire2()
+    game.state.bitboard1 = game.state.possible_moves(1,'W') 
+    game.state.bitboard2 = 0
+    game.state.render() 
 
 if __name__ == "__main__":
-    WIDTH, HEIGHT = 7, 7
-    BYTE_LENGTH = WIDTH*HEIGHT
-    FULL_BITMASK = 2**(BYTE_LENGTH) - 1 # used to remove extra bits from a left bitshift
-    BOARD_BIMASK = 124141734710812 # English cross board shape
+    ROWS, COLS = 7, 8
+    BOARD_BIMASK = 15825266546718776 #124141734710812 # English cross board shape
     '''
-    0011100
-    0011100
-    1111111
-    1111111
-    1111111
-    0011100
-    0011100
+    00111000
+    00111000
+    11111110
+    11111110
+    11111110
+    00111000
+    00111000
     '''
     main()
