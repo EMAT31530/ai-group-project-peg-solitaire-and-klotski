@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import mailbox
 
 @dataclass 
 class State():
@@ -24,34 +23,36 @@ class State():
     0000000
     0010000
     '''
-
     def possible_moves(self) -> int:
         '''Find all possible next moves given the state.'''
         return
     
-    def mailbox(self) -> list[str]:
-        '''Convert the state into mailbox representation.'''
-        output = ''
-        for n in range(BYTE_LENGTH):
-            nth_bit = 1 << n
-            if BOARD_BIMASK & nth_bit:
-                peg = (self.bitboard1 & nth_bit and 1) + 2*(self.bitboard2 & nth_bit and 1)
-                output+=str(peg)
-            else:
-                output+='-'
-        return output
-    
-    def make2D(self) -> list[list]:
-        '''Remove bitboard row seperator bits and split it by the number of rows.'''
-        mailbox = self.mailbox()
-        return [ mailbox[ HEIGHT*row : HEIGHT*row+HEIGHT ] for row in range(WIDTH) ]
+    def render(self) -> None:
+        '''Process and print the current state to the terminal.'''
+        for row in range(WIDTH):
+            output_row = ''
+            for n in range(HEIGHT*row,HEIGHT*row+HEIGHT):
+                nth_bit = 1 << n
+                if BOARD_BIMASK & nth_bit:
+                    peg = (self.bitboard1 & nth_bit and 1) + 2*(self.bitboard2 & nth_bit and 1)
+                    match peg:
+                            case 0:
+                                output_row += '\033[39m o'
+                            case 1:
+                                output_row += '\033[34m o'
+                            case 2:
+                                output_row += '\033[31m o'  
+                else:
+                    output_row+='\033[39m -'
+            print(output_row)
+        return
 
 class Solitaire2():
     '''A two-player peg solitaire game class.'''
     def __init__(self):
         self.state = State()
         self.player = 1 # player 1 = 1, player 2 = -1
-        self.render()
+        self.state.render()
         
     def make_move(self):
         '''Applies an action.'''
@@ -59,16 +60,10 @@ class Solitaire2():
             pass
         else:
             pass
-        self.render()
+        self.state.render()
         reward, done = self.is_game_over()
         self.player *= -1 # change player
         return
-    
-    def render(self) -> None:
-        '''Processes and prints the current state to the terminal.'''
-        twoD = self.state.make2D()
-        for r in twoD:
-            print(r)
 
     def is_game_over(self):
         '''Checks whether any terminal states have been reached.'''
@@ -81,7 +76,6 @@ class Solitaire2():
     
 def main():
     game = Solitaire2()
-    game.render()
 
 if __name__ == "__main__":
     WIDTH, HEIGHT = 7, 7
