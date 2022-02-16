@@ -29,10 +29,17 @@ class State():
         '''Find all possible next moves given the state.'''
         return
     
-    def mailbox(self) -> list[int]:
+    def mailbox(self) -> list[str]:
         '''Convert the state into mailbox representation.'''
-        # (int & 1 << n and 1) gets the n'th bit of an int
-        return [ (self.bitboard1 & (1 << n) and 1) + 2*(self.bitboard2 & (1 << n) and 1) for n in range(BYTE_LENGTH) ]
+        output = ''
+        for n in range(BYTE_LENGTH):
+            nth_bit = 1 << n
+            if BOARD_BIMASK & nth_bit:
+                peg = (self.bitboard1 & nth_bit and 1) + 2*(self.bitboard2 & nth_bit and 1)
+                output+=str(peg)
+            else:
+                output+='-'
+        return output
     
     def make2D(self) -> list[list]:
         '''Remove bitboard row seperator bits and split it by the number of rows.'''
