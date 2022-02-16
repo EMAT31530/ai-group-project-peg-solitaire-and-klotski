@@ -1,6 +1,6 @@
 Project to apply search algorithms for peg solitaire and klotski puzzles.
 
-## To-do
+# To-do
 - [x] Research search algorithm papers
 - [x] Research klotski and peg solitaire papers
 - [ ] Research and come up with heuristics
@@ -11,7 +11,7 @@ Project to apply search algorithms for peg solitaire and klotski puzzles.
 - [ ] Measure run time and memory usage of the search algorithms
 - [ ] Repeat for harder versions of those puzzles such as two-player versions
 
-# Peg Solitaire
+## Peg Solitaire
 - [x] Breadth first 
 - [ ] Iterative deepening
 - [ ] Uniform cost
@@ -22,7 +22,7 @@ Two-player
 - [ ] Monte Carlo tree
 - [ ] Minimax with Alpha-Beta Pruning
 
-# Klotski Seach Algorithms 
+## Klotski Seach Algorithms 
 - [x] Breadth first 
 - [ ] Iterative deepening
 - [ ] Uniform cost
