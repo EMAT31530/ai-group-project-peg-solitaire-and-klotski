@@ -12,7 +12,7 @@ P = 4       # 1x1 block
 B = 0       # Blank
 S = 1       # positions taken by extra block
 
-kdic = {0:'B', 1:'S', 2:'H', 3:'V', 4:'P', 7:'K'}
+dictionary = {0:'B', 1:'S', 2:'H', 3:'V', 4:'P', 7:'K'}
 # common starting positions
 board_1 = [
     {
@@ -27,7 +27,7 @@ board_1 = [
 print(board_1)
 print("Input the matrix number u want to move ")
 Movingblock=input()
-self=kdic(Movingblock) #the block in this position
+self=dictionary(Movingblock) #the block in this position
 
 print("Input the direction of the move, 'up','down','left','right'")
 dest=input()
