@@ -1,13 +1,23 @@
 import numpy as np
 from time import perf_counter
 
-board = np.array([
+board_english = np.array([
 	[-1,-1, 1, 1, 1,-1,-1],
 	[-1,-1, 1, 1, 1,-1,-1],
 	[ 1, 1, 1, 1, 1, 1, 1],
 	[ 1, 1, 1, 0, 1, 1, 1],
 	[ 1, 1, 1, 1, 1, 1, 1],
 	[-1,-1, 1, 1, 1,-1,-1],
+	[-1,-1, 1, 1, 1,-1,-1]
+	])
+
+board_european = np.array([
+	[-1,-1, 0, 1, 1,-1,-1],
+	[-1, 1, 1, 1, 1, 1,-1],
+	[ 1, 1, 1, 1, 1, 1, 1],
+	[ 1, 1, 1, 1, 1, 1, 1],
+	[ 1, 1, 1, 1, 1, 1, 1],
+	[-1, 1, 1, 1, 1, 1,-1],
 	[-1,-1, 1, 1, 1,-1,-1]
 	])
 
@@ -58,7 +68,7 @@ def evaluate_board(board):
 			if element == 1:
 				count += 1
 	if (count == 1) and board[3, 3] == 1:
-		print("Solution found!\n")
+		print("\nSolution found!\n")
 		print(board)
 		return 0
 	else:
@@ -72,18 +82,14 @@ def board_code(board):
 
 #######################################################################################################################
 
-t = perf_counter()
-visited = set()
-stats = {"End states found:": 0, "Nodes visited:": 0}
-
+visited = {board_code(board_english)}
+stats = {"End states found:": 1, "Nodes visited:": 0, "Copies found:": 0}
 
 def dfs(board, solution = ()):
-	hash_code = board_code(board)
-	if hash_code not in visited:
-		visited.add(hash_code)
 	if evaluate_board(board) == 0:
 		stats["Nodes visited:"] = len(visited)
-		print("\nSolution:")
+		print("\nSolution length:", len(solution))
+		print("Solution:")
 		for x in solution:
 			print(x[0], "->", x[1])
 		return solution
@@ -95,14 +101,19 @@ def dfs(board, solution = ()):
 	for move in possible_moves:
 		nodes.append(update_board(np.copy(board), move))
 	for child in nodes:
-		if board_code(child) not in visited:
+		if board_code(child) in visited:
+			stats["Copies found:"] += 1
+		hash_code = board_code(child)
+		if hash_code not in visited:
+			visited.add(hash_code)
 			output = dfs(child, [x for x in solution]+[move])
 			if output:
 				return output
 
 
-dfs(board)
+t = perf_counter()
+dfs(board_english)
 print("\n")
 for data in stats:
 	print(str(data), stats[data])
-print("runtime:", perf_counter() - t)
+print("runtime:", perf_counter() - t, "\n")
