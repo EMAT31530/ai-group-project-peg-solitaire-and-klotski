@@ -1,24 +1,14 @@
 import numpy as np
 from time import perf_counter
 
-board_english = np.array([
-	[-1,-1, 1, 1, 1,-1,-1],
-	[-1,-1, 1, 1, 1,-1,-1],
+board = np.array([
+	[ 2, 2, 1, 1, 1, 2, 2],
+	[ 2, 2, 1, 1, 1, 2, 2],
 	[ 1, 1, 1, 1, 1, 1, 1],
 	[ 1, 1, 1, 0, 1, 1, 1],
 	[ 1, 1, 1, 1, 1, 1, 1],
-	[-1,-1, 1, 1, 1,-1,-1],
-	[-1,-1, 1, 1, 1,-1,-1]
-	])
-
-board_european = np.array([
-	[-1,-1, 0, 1, 1,-1,-1],
-	[-1, 1, 1, 1, 1, 1,-1],
-	[ 1, 1, 1, 1, 1, 1, 1],
-	[ 1, 1, 1, 1, 1, 1, 1],
-	[ 1, 1, 1, 1, 1, 1, 1],
-	[-1, 1, 1, 1, 1, 1,-1],
-	[-1,-1, 1, 1, 1,-1,-1]
+	[ 2, 2, 1, 1, 1, 2, 2],
+	[ 2, 2, 1, 1, 1, 2, 2]
 	])
 
 def calculate_moves(board, x, y):
@@ -82,8 +72,8 @@ def board_code(board):
 
 #######################################################################################################################
 
-visited = {board_code(board_english)}
-stats = {"End states found:": 1, "Nodes visited:": 0, "Copies found:": 0}
+visited = {board_code(board)}
+stats = {"End states found:": 1, "Nodes visited:": 0, "Copies bypassed:": 0}
 
 def dfs(board, solution = ()):
 	if evaluate_board(board) == 0:
@@ -102,7 +92,7 @@ def dfs(board, solution = ()):
 		nodes.append(update_board(np.copy(board), move))
 	for child in nodes:
 		if board_code(child) in visited:
-			stats["Copies found:"] += 1
+			stats["Copies bypassed:"] += 1
 		hash_code = board_code(child)
 		if hash_code not in visited:
 			visited.add(hash_code)
@@ -110,9 +100,10 @@ def dfs(board, solution = ()):
 			if output:
 				return output
 
-
 t = perf_counter()
-dfs(board_english)
+print("\nStart board:\n")
+print(board)
+dfs(board)
 print("\n")
 for data in stats:
 	print(str(data), stats[data])
