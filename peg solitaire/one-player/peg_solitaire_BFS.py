@@ -1,14 +1,30 @@
 import numpy as np
+from time import perf_counter
+
+# board = np.array([
+# 	[ 2, 2, 1, 1, 1, 2, 2],
+# 	[ 2, 2, 1, 1, 1, 2, 2],
+# 	[ 1, 1, 1, 1, 1, 1, 1],
+# 	[ 1, 1, 1, 0, 1, 1, 1],
+# 	[ 1, 1, 1, 1, 1, 1, 1],
+# 	[ 2, 2, 1, 1, 1, 2, 2],
+# 	[ 2, 2, 1, 1, 1, 2, 2]
+# 	])
 
 board = np.array([
-	[-1,-1, 1, 1, 1,-1,-1],
-	[-1,-1, 1, 1, 1,-1,-1],
-	[ 1, 1, 1, 1, 1, 1, 1],
-	[ 1, 1, 1, 0, 1, 1, 1],
-	[ 1, 1, 1, 1, 1, 1, 1],
-	[-1,-1, 1, 1, 1,-1,-1],
-	[-1,-1, 1, 1, 1,-1,-1]
+	[1, 1, 1, 1, 1],
+	[1, 1, 1, 1, 1],
+	[1, 1, 1, 1, 1],
+	[1, 1, 0, 1, 1],
+	[1, 1, 1, 1, 1],
 	])
+
+rows = np.shape(board)[0] - 1
+columns = np.shape(board)[1] - 1
+
+print("\nStart board:\n")
+print(board)
+print("\n")
 
 def calculate_moves(board, x, y):
 	x_old = x
@@ -19,7 +35,7 @@ def calculate_moves(board, x, y):
 		x_new = x_old + direction[0]
 		y_new = y_old + direction[1]
 		# Here we make sure that the generated coordinates within the bounds of the board
-		if (0 <= x_new <= 6) and (0 <= y_new <= 6):
+		if (0 <= x_new <= rows) and (0 <= y_new <= columns):
 			if board[x_new, y_new] == 0:
 				# Make sure that the midpoint is equal to 1
 				if board[int((x_old + x_new)/2), int((y_old + y_new)/2)]:
@@ -56,8 +72,8 @@ def evaluate_board(board):
 		for element in row:
 			if element == 1:
 				count += 1
-	if (count == 1) and board[3, 3] == 1:
-		print("Solution found!\n")
+	if (count == 1): # and board[3, 3] == 1
+		print("\nSolution found!\n")
 		print(board)
 		return 0
 	else:
@@ -69,18 +85,18 @@ def board_code(board):
 	"""
 	return hash(tuple(map(tuple, board)))
 
-#######################################################################################################################
+#######################################################################################################
 
-visited = set()
+visited = {board_code(board)}
 stats = {"count": 0}
+print("Nodes on level 0:", 1)
 
 def bfs(queue):
 	nodes = []
 	while queue:
 		current_board = queue.pop(0)
 		if evaluate_board(current_board) == 0:
-			print("Solution found!")
-			return 0
+			return True
 		possible_moves = generate_moves(current_board)
 		child_nodes = []
 		for move in possible_moves:
@@ -92,24 +108,18 @@ def bfs(queue):
 				nodes.append(child)
 	stats["count"] += 1
 	print("Nodes on level " + str(stats["count"]) + ":", len(nodes))
-		
-	p = bfs(nodes)
-	output = bfs(p)
-	if output != 0:
+
+	output = bfs(nodes)
+	if output:
 		return output
 
-# Unfortunately the bfs process is too inefficient for this problem.
-# DFS is much better suited to the problem.
-# Below we terminate bfs if the runtime exceeds 20 seconds.
+#######################################################################################################
 
-import multiprocessing
-import time
+t = perf_counter()
+bfs([board])
+print("\nruntime:", perf_counter() - t)
 
-if __name__ == '__main__':
-	p = multiprocessing.Process(target=bfs, name="bfs", args=([board],))
-	p.start()
-	print("\nNodes on level 0: 1")
-	time.sleep(20)
-	print("\nTime limit exceeded! Process terminated!\nBFS incomplete!\n")
-	p.terminate()
-	p.join()
+
+# This method is far too slow to solve the typical 7x7 English board setup. However, it can solve
+# a smaller and simpler version.
+
