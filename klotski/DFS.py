@@ -3,7 +3,10 @@
 import os
 import time
 import numpy as np
-from datas import chrs
+import datas
+import dict
+
+
 
 K = 7       # 2x2 block king
 H = 2       # 2x1 block
@@ -12,23 +15,34 @@ P = 4       # 1x1 block
 B = 0       # Blank
 S = 1       # positions taken by extra block
 
+board_1 = [
+    {
+        'name':u'1. ',
+        'data':
+           [[P, K, S, P],
+            [V, S, S, V],
+            [S, H, S, S],
+            [H, S, H, S],
+            [B, P, P, B]] }],
+
 # size of board
 ROW = 5
 COL = 4
 
 # board element paired
-kdic = {0:'B', 1:'S', 2:'H', 3:'V', 4:'P', 7:'K'}
+dictionary = {0:'B', 1:'S', 2:'H', 3:'V', 4:'P', 7:'K'}
+      #NEED EDIT DIC TYPE!!!!!
 
 # print board
 def kdisplay(klotd):
     for r in range(ROW):
         td = klotd[r]
-        print(' '.join([kdic[i] for i in td]))
+        print(' '.join([dictionary[i] for i in td]))
     print('')
 
 # give a position, return any possible moves after
 # If the block cannot move, return empty
-def knexts(klotd, r, c):
+def mainloop(klotd, r, c):
     ret = []
     elet = klotd[r, c]
 
@@ -115,7 +129,7 @@ def kchilds(klotd):
     for r in range(ROW):
         for c in range(COL):
             if cuk[r, c] in (K, H, V, P):
-                tcd = knexts(cuk, r, c)
+                tcd = mainloop(cuk, r, c)
                 childs = [i.tolist() for i in tcd]
                 ret.extend(childs)
     return ret
@@ -177,7 +191,7 @@ if __name__ == '__main__':
             [B, B, B, B],
             [B, B, B, B]]
     
-    src = chrs[1]['data']
+    src = board_1
     kdisplay(src)
     time_start = time.time()
     ret = ksolute(src)
