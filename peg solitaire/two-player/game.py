@@ -53,26 +53,56 @@ class Solitaire2():
         self.state = State()
         self.player = 1 # player 1 = 1, player 2 = 0
         self.state.render()
+        self.overlap = self.state.bitboard1 | self.state.bitboard2
         
-    def play_turn(self):
+    def play_turn(self, move: int):
         '''Player makes their move.'''
         if self.player == 1:
             pass
         else:
             pass
         self.state.render()
-        reward, done = self.is_game_over()
+        done_flag, player1_moves = self.is_game_over()
         self.player = not self.player # change player
+        self.overlap = self.state.bitboard1 | self.state.bitboard2
         return
 
     def is_game_over(self):
-        '''Checks whether any terminal states have been reached.'''
+        '''Checks whether both players are unable to move, if so scores are tallied.'''
+        player1_moves = {}
+        if player1_moves == {}:
+            player2_moves = {}
+            if player2_moves == {}:
+                score1, score2 = self.tally_scores()
+                if score2 < score1:
+                    done_flag = -1
+                else:
+                    done_flag = 1
+        else:
+            done_flag = 0
+        return done_flag, player1_moves
+
+    def all_legal_moves(self, player: bool):
+        '''Find legal moves in all directions for a player.'''
+        if player == 1:
+            player_bits = self.state.bitboard1
+        else: 
+            player_bits = self.state.bitboard2
+        moves_dict = {}
+        for d in DIRECTIONS:
+            moves = self.legal_moves(DIRECTIONS[d], player_bits)
+            if moves:
+                moves_dict[d] = moves
+        return moves_dict
+
+    def tally_scores(self):
+        pass
         return
 
     def make_move(self, x:int, y:int, dir:int):
         '''Update the state with the move.'''
         start = self.convert_coord(x,y)
-        start_moves, _ = self.legal_moves(dir)
+        start_moves, _ = self.legal_moves(dir, self.player)
         if start & start_moves:
             middle = int(start * 2**dir)
             self.state.bitboard1 &= ~(self.state.bitboard1 & middle)
@@ -88,22 +118,13 @@ class Solitaire2():
         else:
             raise ValueError('Illegal move!')
     
-    def legal_moves(self, direction: int) -> int:
-        '''Find all legal next moves in a direction given the current state and player.'''
-        overlap = self.state.bitboard1 | self.state.bitboard2
-        if self.player == 1:
-            friendly_bits = self.state.bitboard1
-        else: 
-            friendly_bits = self.state.bitboard2
-        self._view(friendly_bits,'friendly')
-        self._view(int(friendly_bits * 2**direction),'shifted friendly')
-        adjacent_pegs = int(friendly_bits * 2**direction) & overlap
-        self._view(adjacent_pegs, 'adjacent')
-        end_moves = int(adjacent_pegs * 2**direction) & ~friendly_bits & BOARD_BIMASK 
+    def legal_moves(self, direction: int, player_bits) -> int:
+        '''Find the legal moves for a player in a direction given the current board state.'''
+        adjacent_pegs = int(player_bits * 2**direction) & self.overlap
+        end_moves = int(adjacent_pegs * 2**direction) & ~player_bits & BOARD_BIMASK 
         start_moves = int(end_moves * 2**-(2*direction)) & BOARD_BIMASK 
-        self._view(start_moves, 'start')
-        self._view(end_moves, 'end')
-        return start_moves, end_moves
+        self._view(start_moves, f'start, direction:{direction}')
+        return start_moves
 
     @staticmethod
     def convert_coord(x: int, y: int) -> int:
@@ -138,11 +159,7 @@ class Solitaire2():
 
 def main():
     game = Solitaire2()
-    game.player = not game.player
-    print('West:')
-    game.make_move(6,3,DIRECTIONS['W'])
-
-
+    moves = game.all_legal_moves(1)
 
 if __name__ == "__main__":
     ROWS, COLS = 7, 8
