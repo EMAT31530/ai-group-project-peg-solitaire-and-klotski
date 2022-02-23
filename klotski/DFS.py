@@ -1,197 +1,183 @@
 #coding=utf-8
 
-import os
+
 import time
 import numpy as np
-import datas
-import dict
 
 
 
-K = 7       # 2x2 block king
-H = 2       # 2x1 block
-V = 3       # 1x2 block
-P = 4       # 1x1 block
-B = 0       # Blank
-S = 1       # positions taken by extra block
+King = 0
+Soilder = 1
+General1x2 = 2
+General2x1 = 3
+NU = 8
+Blank = 9
 
-board_1 = [
-    {
 
-           [[P, K, S, P],
-            [V, S, S, V],
-            [S, H, S, S],
-            [H, S, H, S],
-            [B, P, P, B]] }],
+board_1 = [[Soilder, King, NU, Soilder],
+            [General1x2, NU, NU, General1x2],
+            [NU, General2x1, NU, NU],
+            [General2x1, NU, General2x1, NU],
+            [Blank, Soilder, Soilder, Blank]]
+
+print(board_1)
 
 # size of board
 ROW = 5
 COL = 4
 
 # board element paired
-dictionary = {0:'B', 1:'S', 2:'H', 3:'V', 4:'P', 7:'K'}
+dictionary = {9:'Blank', 8:'NU', 3:'General2x1', 2:'General1x2', 1:'Soilder', 0:'King'}
 
-
-# print board
-def kdisplay(board_1):
-    print(board_1)
 
 # give a position, return any possible moves after
 # If the block cannot move, return empty
-def mainloop(klotd, r, c):
-    ret = []
-    elet = klotd[r, c]
+def mainloop(move, row, column):
+    result = []
+    chess = move[row, column]
 
-    if elet == K:
-        if (r>0) and (klotd[r-1, c:c+2]==[B, B]).all():
-            kcpy = klotd.copy()
-            kcpy[r-1:r+2, c:c+2] = [[K, S], [S, S], [B, B]]
-            ret.append(kcpy)
-        if (r<3) and (klotd[r+2, c:c+2]==[B, B]).all():
-            kcpy = klotd.copy()
-            kcpy[r:r+3, c:c+2] = [[B, B], [K, S], [S, S]]
-            ret.append(kcpy)
-        if (c>0) and (klotd[r:r+2, c-1]==[B, B]).all():
-            kcpy = klotd.copy()
-            kcpy[r:r+2, c-1:c+2] = [[K, S, B], [S, S, B]]
-            ret.append(kcpy)
-        if (c<2) and (klotd[r:r+2, c+2]==[B, B]).all():
-            kcpy = klotd.copy()
-            kcpy[r:r+2, c:c+3] = [[B, K, S], [B, S, S]]
-            ret.append(kcpy)
+    if chess == King:
+        if (row>0) and (move[row-1, column:column+2]==[Blank, Blank]).all():
+            next = move.copy()
+            next[row-1:row+2, column:column+2] = [[King, NU], [NU, NU], [Blank, Blank]]
+            result.append(next)
+        if (row<3) and (move[row+2, column:column+2]==[Blank, Blank]).all():
+            next = move.copy()
+            next[row:row+3, column:column+2] = [[Blank, Blank], [King, NU], [NU, NU]]
+            result.append(next)
+        if (column>0) and (move[row:row+2, column-1]==[Blank, Blank]).all():
+            next = move.copy()
+            next[row:row+2, column-1:column+2] = [[King, NU, Blank], [NU, NU, Blank]]
+            result.append(next)
+        if (column<2) and (move[row:row+2, column+2]==[Blank, Blank]).all():
+            next = move.copy()
+            next[row:row+2, column:column+3] = [[Blank, King, NU], [Blank, NU, NU]]
+            result.append(next)
 
-    if elet == H:
-        if (r>0) and (klotd[r-1, c:c+2]==[B, B]).all():
-            kcpy = klotd.copy()
-            kcpy[r-1:r+1, c:c+2] = [[H, S], [B, B]]
-            ret.append(kcpy)
-        if (r<4) and (klotd[r+1, c:c+2]==[B, B]).all():
-            kcpy = klotd.copy()
-            kcpy[r:r+2, c:c+2] = [[B, B], [H, S]]
-            ret.append(kcpy)
-        if (c>0) and (klotd[r, c-1] == B).all():
-            kcpy = klotd.copy()
-            kcpy[r, c-1:c+2] = [H, S, B]
-            ret.append(kcpy)
-        if (c<2) and (klotd[r, c+2] == B).all():
-            kcpy = klotd.copy()
-            kcpy[r, c:c+3] = [B, H, S]
-            ret.append(kcpy)
+    if chess == General2x1:
+        if (row>0) and (move[row-1, column:column+2]==[Blank, Blank]).all():
+            next = move.copy()
+            next[row-1:row+1, column:column+2] = [[General2x1, NU], [Blank, Blank]]
+            result.append(next)
+        if (row<4) and (move[row+1, column:column+2]==[Blank, Blank]).all():
+            next = move.copy()
+            next[row:row+2, column:column+2] = [[Blank, Blank], [General2x1, NU]]
+            result.append(next)
+        if (column>0) and (move[row, column-1] == Blank).all():
+            next = move.copy()
+            next[row, column-1:column+2] = [General2x1, NU, Blank]
+            result.append(next)
+        if (column<2) and (move[row, column+2] == Blank).all():
+            next = move.copy()
+            next[row, column:column+3] = [Blank, General2x1, NU]
+            result.append(next)
 
-    if elet == V:
-        if (r>0) and (klotd[r-1, c] == B).all():
-            kcpy = klotd.copy()
-            kcpy[r-1:r+2, c] = [V, S, B]
-            ret.append(kcpy)
-        if (r<3) and (klotd[r+2, c] == B).all():
-            kcpy = klotd.copy()
-            kcpy[r:r+3, c] = [B, V, S]
-            ret.append(kcpy)
-        if (c>0) and (klotd[r:r+2, c-1] == [B, B]).all():
-            kcpy = klotd.copy()
-            kcpy[r:r+2, c-1:c+1] = [[V, B], [S, B]]
-            ret.append(kcpy)
-        if (c<3) and (klotd[r:r+2, c+1] == [B, B]).all():
-            kcpy = klotd.copy()
-            kcpy[r:r+2, c:c+2] = [[B, V], [B, S]]
-            ret.append(kcpy)
+    if chess == General1x2 :
+        if (row>0) and (move[row-1, column] == Blank).all():
+            next = move.copy()
+            next[row-1:row+2, column] = [General1x2, NU, Blank]
+            result.append(next)
+        if (row<3) and (move[row+2, column] == Blank).all():
+            next = move.copy()
+            next[row:row+3, column] = [Blank, General1x2, NU]
+            result.append(next)
+        if (column>0) and (move[row:row+2, column-1] == [Blank, Blank]).all():
+            next = move.copy()
+            next[row:row+2, column-1:column+1] = [[General1x2, Blank], [NU, Blank]]
+            result.append(next)
+        if (column<3) and (move[row:row+2, column+1] == [Blank, Blank]).all():
+            next = move.copy()
+            next[row:row+2, column:column+2] = [[Blank, General1x2], [Blank, NU]]
+            result.append(next)
 
-    if elet == P:
-        if (r>0) and (klotd[r-1, c] == B):
-            kcpy = klotd.copy()
-            kcpy[r-1:r+1, c] = [P, B]
-            ret.append(kcpy)
-        if (r<4) and (klotd[r+1, c] == B):
-            kcpy = klotd.copy()
-            kcpy[r:r+2, c] = [B, P]
-            ret.append(kcpy)
-        if (c>0) and (klotd[r, c-1] == B):
-            kcpy = klotd.copy()
-            kcpy[r, c-1:c+1] = [P, B]
-            ret.append(kcpy)
-        if (c<3) and (klotd[r, c+1] == B):
-            kcpy = klotd.copy()
-            kcpy[r, c:c+2] = [B, P]
-            ret.append(kcpy)
+    if chess == Soilder:
+        if (row>0) and (move[row-1, column] == Blank):
+            next = move.copy()
+            next[row-1:row+1, column] = [Soilder, Blank]
+            result.append(next)
+        if (row<4) and (move[row+1, column] == Blank):
+            next = move.copy()
+            next[row:row+2, column] = [Blank, Soilder]
+            result.append(next)
+        if (column>0) and (move[row, column-1] == Blank):
+            next = move.copy()
+            next[row, column-1:column+1] = [Soilder, Blank]
+            result.append(next)
+        if (column<3) and (move[row, column+1] == Blank):
+            next = move.copy()
+            next[row, column:column+2] = [Blank, Soilder]
+            result.append(next)
 
-    return ret
+    return result
 
 
 # For a given board, return any possibilities of next step
-def kchilds(klotd):
-    ret = []
-    cuk = np.asarray(klotd)
+def Possibilities(move):
+    result = []
+    nextmove = np.asarray(move)
     # search for every blocks
-    for r in range(ROW):
-        for c in range(COL):
-            if cuk[r, c] in (K, H, V, P):
-                tcd = mainloop(cuk, r, c)
-                childs = [i.tolist() for i in tcd]
-                ret.extend(childs)
-    return ret
+    for row in range(ROW):
+        for column in range(COL):
+            if nextmove[row, column] in (King, General2x1, General1x2, Soilder):
+                Solve = mainloop(nextmove, row, column)
+                possibles = [i.tolist() for i in Solve]
+                result.extend(possibles)
+    return result
 
 
 # Return a list, each elements in steps represents each step
-def ksolute(klotd):
-
+def DFS(move):
     # Storage in 1d array
-    kdbs = [klotd]
-    # order the list, prodece an index
-    prts = [-1]
-    idxs = [0]
+    Moves = [move]
+
+
+    itemposition = [-1]
+    indexposition = [0]
 
     # start DFS
-    finish = -1
+    EndDFS = -1
     steps = 0
-    t1 = t2 = t3 = 0
+
     while True:
-        
+
         # For loop to check any possibility
-        for i in xrange(idxs[-1], len(kdbs)):
-            if kdbs[i][3][1] == K:
-                finish = i
+
+        for j in range(indexposition[-1], len(Moves)):
+            if Moves[j][3][1] == King:
+                EndDFS = j
                 break
 
-        if finish != -1:
+        if EndDFS != -1:
             break
 
         # If not finish
-        slip = idxs[-2] if (len(idxs)>=2) else idxs[-1]
-        child = []
-        endi = len(kdbs)
-        for i in xrange(idxs[-1], endi):
-            child = kchilds(kdbs[i])
+        Continuemove = indexposition[-2] if (len(indexposition) >= 2) else indexposition[-1]
+        endmove = len(Moves)
+        for j in range(indexposition[-1], endmove):
+            Possibles = Possibilities(Moves[j])
             # Filtering any already existed possible steps
-            for k in child:
-                if k in kdbs[slip:]:
+            for k in Possibles:
+                if k in Moves[Continuemove:]:
                     continue
-                prts.append(i)
-                kdbs.append(k)
+                itemposition.append(j)
+                Moves.append(k)
 
-        idxs.append(endi)
+        indexposition.append(endmove)
         steps += 1
 
     # record the whole process
-    ret = [kdbs[finish]]
-    while finish != 0:
-        finish = prts[finish]
-        ret.insert(0, kdbs[finish])
+    result = [Moves[EndDFS]]
+    while EndDFS != 0:
+        EndDFS = itemposition[EndDFS]
+        result.insert(0, Moves[EndDFS])
 
-    return ret
+    return result
 
-# test
-if __name__ == '__main__':
-    data = [[B, B, B, B],
-            [B, K, S, B],
-            [B, S, S, B],
-            [B, B, B, B],
-            [B, B, B, B]]
-    
-    src = board_1
-    kdisplay(src)
-    time_start = time.time()
-    ret = ksolute(src)
-    time_end = time.time()
-    print('Totally cast: %f s, %d steps', time_end - time_start, len(ret))
 
+
+starttime = time.time()
+result = DFS(board_1)
+endtime = time.time()
+print('Time cost for this solution: ', endtime - starttime)
+print('Number of steps: ', len(result))
 
