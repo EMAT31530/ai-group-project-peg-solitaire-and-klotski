@@ -52,27 +52,53 @@ class Solitaire2():
     def __init__(self):
         self.state = State()
         self.player = 1 # player 1 = 1, player 2 = 0
+        self.overlap = self.state.bitboard1 | self.state.bitboard2
         self.state.render()
-        
-    def play_turn(self):
-        '''Player makes their move.'''
-        if self.player == 1:
-            pass
-        else:
-            pass
-        self.state.render()
-        reward, done = self.is_game_over()
-        self.player = not self.player # change player
-        return
 
     def is_game_over(self):
-        '''Checks whether any terminal states have been reached.'''
-        return
+        '''Checks whether both players are unable to move, if so scores are tallied.'''
+        player_moves = self.all_legal_moves(self.player)
+        if not player_moves:
+            opponent_moves = self.all_legal_moves(not self.player)
+            if not opponent_moves:
+                tally1 = self.state.bitboard1.bit_count()
+                tally2 = self.state.bitboard2.bit_count()
+                if tally2 <= tally1:
+                    self.done = -1
+                else:
+                    self.done = 1
+            else:
+                self.done = 0
+        else:
+            self.done = 0
+        return player_moves
 
-    def make_move(self, x:int, y:int, dir:int):
-        '''Update the state with the move.'''
+    def all_legal_moves(self, player: bool) -> dict:
+        '''Find legal moves in all directions for a player.'''
+        if player == 1:
+            player_bits = self.state.bitboard1
+        else: 
+            player_bits = self.state.bitboard2
+        all_moves = {}
+        for d in DIRECTIONS:
+            moves = self.legal_moves(DIRECTIONS[d], player_bits)
+            if moves:
+                all_moves[d] = moves
+        return all_moves
+    
+    def legal_moves(self, direction: int, player_bits) -> int:
+        '''Find the legal moves for a player in a direction given the current board state.'''
+        adjacent_pegs = int(player_bits * 2**direction) & self.overlap
+        end_moves = int(adjacent_pegs * 2**direction) & ~player_bits & BOARD_BIMASK 
+        start_moves = int(end_moves * 2**-(2*direction)) & BOARD_BIMASK 
+        #self._view(start_moves, f'start, direction:{direction}')
+        return start_moves
+
+    def make_move(self, x:int, y:int, direction:str, player_moves: dict) -> None:
+        '''Update the board state with the move.'''
         start = self.convert_coord(x,y)
-        start_moves, _ = self.legal_moves(dir)
+        start_moves = player_moves[direction]
+        dir = DIRECTIONS[direction]
         if start & start_moves:
             middle = int(start * 2**dir)
             self.state.bitboard1 &= ~(self.state.bitboard1 & middle)
@@ -84,26 +110,9 @@ class Solitaire2():
             else:
                 self.state.bitboard2 ^= start
                 self.state.bitboard2 |= end
-            self.state.render()
         else:
             raise ValueError('Illegal move!')
-    
-    def legal_moves(self, direction: int) -> int:
-        '''Find all legal next moves in a direction given the current state and player.'''
-        overlap = self.state.bitboard1 | self.state.bitboard2
-        if self.player == 1:
-            friendly_bits = self.state.bitboard1
-        else: 
-            friendly_bits = self.state.bitboard2
-        self._view(friendly_bits,'friendly')
-        self._view(int(friendly_bits * 2**direction),'shifted friendly')
-        adjacent_pegs = int(friendly_bits * 2**direction) & overlap
-        self._view(adjacent_pegs, 'adjacent')
-        end_moves = int(adjacent_pegs * 2**direction) & ~friendly_bits & BOARD_BIMASK 
-        start_moves = int(end_moves * 2**-(2*direction)) & BOARD_BIMASK 
-        self._view(start_moves, 'start')
-        self._view(end_moves, 'end')
-        return start_moves, end_moves
+        return
 
     @staticmethod
     def convert_coord(x: int, y: int) -> int:
@@ -116,6 +125,10 @@ class Solitaire2():
                 raise ValueError('Coordinate not part of the board!') 
         else:
             raise ValueError('Coordinate out of bounds!')
+    
+    @staticmethod
+    def ask_for_move():
+        return int(input('x: ')), int(input('y: ')), input('direction: ')
 
     @staticmethod
     def _view(bitboard, message) -> None:
@@ -138,11 +151,15 @@ class Solitaire2():
 
 def main():
     game = Solitaire2()
-    game.player = not game.player
-    print('West:')
-    game.make_move(6,3,DIRECTIONS['W'])
-
-
+    player_moves = game.is_game_over()
+    while not game.done:
+        if player_moves:
+            x, y, dir = game.ask_for_move()
+            game.make_move(x, y, dir, player_moves)
+        game.player = not game.player
+        game.overlap = game.state.bitboard1 | game.state.bitboard2
+        game.state.render()
+        player_moves = game.is_game_over()
 
 if __name__ == "__main__":
     ROWS, COLS = 7, 8
