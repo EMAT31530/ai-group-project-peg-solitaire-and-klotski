@@ -145,12 +145,12 @@ def DFS(move):
         for j in range(indexposition[-1], len(Moves)):
             if Moves[j][3][1] == King:
                 EndDFS = j
-                break
+                break #Break if reaches end
 
         if EndDFS != -1:
             break
 
-        # If not finish
+        # If not break
         Continuemove = indexposition[-2] if (len(indexposition) >= 2) else indexposition[-1]
         endmove = len(Moves)
         for j in range(indexposition[-1], endmove):
