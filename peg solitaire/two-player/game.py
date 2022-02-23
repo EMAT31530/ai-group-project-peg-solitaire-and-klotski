@@ -58,7 +58,7 @@ class Solitaire2():
         self.state = State()
         self.player = 1 # player 1 = 1, player 2 = 0
         self.overlap = self.state.bitboard1 | self.state.bitboard2
-        self.state.render()
+        #self.state.render()
 
     def is_game_over(self):
         '''Checks whether both players are unable to move, if so scores are tallied.'''
@@ -144,21 +144,24 @@ def _view(bitboard, message) -> None:
     return
 
 def main():
-    game = Solitaire2()
-    player_moves = game.is_game_over()
-    while not game.done:
-        time.sleep(0.5)
-        if player_moves:
-            rand_dir = random.choice(list(player_moves))
-            rand_legal_moves = player_moves[rand_dir]
-            rand_move = random.choice(game.on_bits(rand_legal_moves))
-            game.make_move(rand_move, DIRECTIONS[rand_dir])
-        game.state.render()
-        game.overlap = game.state.bitboard1 | game.state.bitboard2
-        game.player = not game.player
+    for playout in range(100000):
+        game = Solitaire2()
         player_moves = game.is_game_over()
-    print(f'reward: {game.done}')
+        while not game.done:
+            if player_moves:
+                rand_dir = random.choice(list(player_moves))
+                rand_legal_moves = player_moves[rand_dir]
+                rand_move = random.choice(game.on_bits(rand_legal_moves))
+                game.make_move(rand_move, DIRECTIONS[rand_dir])
+            #game.state.render()
+            game.overlap = game.state.bitboard1 | game.state.bitboard2
+            game.player = not game.player
+            player_moves = game.is_game_over()
+        rewards.append(game.done)
 
 if __name__ == "__main__":
     #print(timeit.timeit(stmt=testcode,number=100000))
+    rewards = []
     main()
+    p = rewards.count(1)/len(rewards)
+    print(f'player 1 win percentage: {p}')
