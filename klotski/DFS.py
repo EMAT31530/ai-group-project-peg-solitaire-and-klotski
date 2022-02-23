@@ -17,8 +17,7 @@ S = 1       # positions taken by extra block
 
 board_1 = [
     {
-        'name':u'1. ',
-        'data':
+
            [[P, K, S, P],
             [V, S, S, V],
             [S, H, S, S],
@@ -31,14 +30,11 @@ COL = 4
 
 # board element paired
 dictionary = {0:'B', 1:'S', 2:'H', 3:'V', 4:'P', 7:'K'}
-      #NEED EDIT DIC TYPE!!!!!
+
 
 # print board
-def kdisplay(klotd):
-    for r in range(ROW):
-        td = klotd[r]
-        print(' '.join([dictionary[i] for i in td]))
-    print('')
+def kdisplay(board_1):
+    print(board_1)
 
 # give a position, return any possible moves after
 # If the block cannot move, return empty
