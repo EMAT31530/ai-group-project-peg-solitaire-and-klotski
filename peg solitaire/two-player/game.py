@@ -1,18 +1,21 @@
-ROWS, COLS = 7, 8
-DIRECTIONS = {'N': -COLS, 'E': 1, 'S': COLS, 'W': -1}
 ENGLISH_BITMASK = 0b00011100000111000111111101111111011111110001110000011100
+DEFAULT_BOARD1 = 0b00001100000001000001001100110110011001000001000000011000
+DEFAULT_BOARD2 = 0b10000000110000110110001000001000110110000110000000100
 
 class Solitaire2:
     '''A two-player peg solitaire game using a bitboard implementation.'''
-    def __init__(self):
-        self.bitboard1: int = 0b00001100000001000001001100110110011001000001000000011000
-        self.bitboard2: int = 0b10000000110000110110001000001000110110000110000000100
+    def __init__(self, board1: int = DEFAULT_BOARD1, board2: int = DEFAULT_BOARD2, rows: int = 7, cols: int = 8):
+        self.bitboard1 = board1
+        self.bitboard2 = board2
+        self.ROWS = rows
+        self.COLS = cols
+        self.DIRECTIONS = {'N': -self.COLS, 'E': 1, 'S': self.COLS, 'W': -1}
         self.player = True # player 1 = True, player 2 = False
         self.overlap = self.bitboard1 | self.bitboard2
 
     def step(self, direction: str, move_start: int = None) -> None:
         if move_start:
-            self.make_move(move_start, DIRECTIONS[direction])
+            self.make_move(move_start, self.DIRECTIONS[direction])
             self.overlap = self.bitboard1 | self.bitboard2
             # self.render()
         else:
@@ -23,9 +26,9 @@ class Solitaire2:
 
     def render(self) -> None:
         '''Process and print the current game state to the terminal in colour.'''
-        for row in range(ROWS):
+        for row in range(self.ROWS):
             output_row = ''
-            for n in range(COLS*row,COLS*row+COLS):
+            for n in range(self.COLS*row,self.COLS*row+self.COLS):
                 nth_bit = 1 << n
                 if ENGLISH_BITMASK & nth_bit: # if on the board
                     peg = (self.bitboard1 & nth_bit and 1) + 2*(self.bitboard2 & nth_bit and 1)
@@ -69,8 +72,8 @@ class Solitaire2:
         else: 
             player_bits = self.bitboard2
         all_moves = {}
-        for d in DIRECTIONS:
-            moves = self.legal_moves(DIRECTIONS[d], player_bits)
+        for d in self.DIRECTIONS:
+            moves = self.legal_moves(self.DIRECTIONS[d], player_bits)
             if moves:
                 all_moves[d] = moves
         return all_moves
@@ -109,11 +112,11 @@ class Solitaire2:
             bin >>= 1 # remove least sig. bit
         return moves
 
-def _view(bitboard, message) -> None:
+def _view(bitboard: int, message: str, rows: int, cols: int) -> None:
     '''Print a bitboard for debugging purposes.'''
-    for row in range(ROWS):
+    for row in range(rows):
         output_row = ''
-        for n in range(COLS*row,COLS*row+COLS):
+        for n in range(cols*row, cols*row + cols):
             nth_bit = 1 << n
             if ENGLISH_BITMASK & nth_bit: # if on the board
                 peg = bitboard & nth_bit and 1
