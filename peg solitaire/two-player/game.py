@@ -23,8 +23,8 @@ class Solitaire2:
             self.overlap = self.bitboard1 | self.bitboard2
         elif self.display:
             print('No move')
-        self.player = not self.player
         self.player_legal_moves = self.is_game_over()
+        self.player = not self.player # change player
         if self.display:
             self.render()
         return
@@ -81,6 +81,7 @@ class Solitaire2:
             moves = self.legal_moves(self.DIRECTIONS[d], player_bits)
             if moves:
                 all_moves[d] = moves
+                _view(moves)
         return all_moves
     
     def legal_moves(self, direction: int, player_bits: int) -> int:
@@ -117,7 +118,7 @@ class Solitaire2:
             possible_moves >>= 1 # remove least sig. bit
         return moves
 
-def _view(bitboard: int, message: str, rows: int, cols: int) -> None:
+def _view(bitboard: int, message: str = '', rows: int = 7, cols: int = 8) -> None:
     '''Print a bitboard for debugging purposes.'''
     for row in range(rows):
         output_row = ''

@@ -10,8 +10,7 @@ def main() -> list[int]:
             if game.player_legal_moves:
                 rand_dir = random.choice(list(game.player_legal_moves))
                 seperate_moves = game.on_bits(game.player_legal_moves[rand_dir])
-                rand_square = random.choice(seperate_moves)
-            game.step(rand_dir, rand_square)
+            game.step(rand_dir, random.choice(seperate_moves))
             sleep(1)
         rewards.append(game.done)
     return rewards
