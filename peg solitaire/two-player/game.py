@@ -17,16 +17,16 @@ class Solitaire2:
         if self.display:
             self.render()
 
-    def step(self, direction: str, move_start: int = None) -> None:
+    def step(self, move_start: int = None, direction: str = None) -> None:
         if move_start:
             self.make_move(move_start, self.DIRECTIONS[direction])
             self.overlap = self.bitboard1 | self.bitboard2
         elif self.display:
             print('No move')
-        self.player_legal_moves = self.is_game_over()
-        self.player = not self.player # change player
         if self.display:
             self.render()
+        self.player = not self.player # change player
+        self.player_legal_moves = self.is_game_over()
         return
 
     def render(self) -> None:
@@ -81,7 +81,6 @@ class Solitaire2:
             moves = self.legal_moves(self.DIRECTIONS[d], player_bits)
             if moves:
                 all_moves[d] = moves
-                _view(moves)
         return all_moves
     
     def legal_moves(self, direction: int, player_bits: int) -> int:

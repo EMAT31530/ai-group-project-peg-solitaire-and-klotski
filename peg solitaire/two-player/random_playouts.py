@@ -1,17 +1,18 @@
 import random
 import game as g
-from time import sleep
+# from time import sleep
 
 def main() -> list[int]:
     rewards = []
-    for _ in range(2):
-        game = g.Solitaire2(display=True)
+    for _ in range(100):
+        game = g.Solitaire2(display=False)
         while not game.done:
             if game.player_legal_moves:
                 rand_dir = random.choice(list(game.player_legal_moves))
                 seperate_moves = game.on_bits(game.player_legal_moves[rand_dir])
-            game.step(rand_dir, random.choice(seperate_moves))
-            sleep(1)
+                game.step(random.choice(seperate_moves),rand_dir)
+            else:
+                game.step()
         rewards.append(game.done)
     return rewards
 
