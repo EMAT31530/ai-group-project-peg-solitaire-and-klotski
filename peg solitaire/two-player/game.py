@@ -12,7 +12,7 @@ class Solitaire2:
         self.DIRECTIONS = {'N': -self.COLS, 'E': 1, 'S': self.COLS, 'W': -1}
         self.player = True # player 1 = True, player 2 = False
         self.overlap = self.bitboard1 | self.bitboard2
-        self.player_moves = self.is_game_over()
+        self.player_legal_moves = self.is_game_over()
         self.display = display
         if self.display:
             self.render()
@@ -21,10 +21,10 @@ class Solitaire2:
         if move_start:
             self.make_move(move_start, self.DIRECTIONS[direction])
             self.overlap = self.bitboard1 | self.bitboard2
-        else:
+        elif self.display:
             print('No move')
         self.player = not self.player
-        self.player_moves = self.is_game_over()
+        self.player_legal_moves = self.is_game_over()
         if self.display:
             self.render()
         return
@@ -38,14 +38,14 @@ class Solitaire2:
                 if ENGLISH_BITMASK & nth_bit: # if on the board
                     peg = (self.bitboard1 & nth_bit and 1) + 2*(self.bitboard2 & nth_bit and 1)
                     if peg == 0: # empty peg
-                        output_row += '\033[39m o' # white
+                        output_row += '\033[39m o' # white circle
                     elif peg == 1: # player 1 peg
-                        output_row += '\033[34m o' # blue
+                        output_row += '\033[34m o' # blue circle
                     elif peg == 2: # player 2 peg
-                        output_row += '\033[31m o' # red
+                        output_row += '\033[31m o' # red circle
                     else:
                         raise ValueError('State not valid') 
-                else:
+                else: # not on the board
                     output_row += '  '
             print(output_row)
         print('\n')
@@ -53,9 +53,9 @@ class Solitaire2:
 
     def is_game_over(self) -> dict:
         '''Checks whether both players are unable to move, if so scores are tallied. 
-        Returns all starting squares that have a legal move in each direction.'''
-        player_moves = self.all_legal_moves(self.player)
-        if not player_moves:
+        Returns all starting squares that have a legal move in a direction.'''
+        player_legal_moves = self.all_legal_moves(self.player)
+        if not player_legal_moves:
             opponent_moves = self.all_legal_moves(not self.player)
             if not opponent_moves:
                 tally1 = self.bitboard1.bit_count()
@@ -68,7 +68,7 @@ class Solitaire2:
                 self.done = 0
         else:
             self.done = 0
-        return player_moves
+        return player_legal_moves
 
     def all_legal_moves(self, player: bool) -> dict:
         '''Find legal moves in all directions for a player.'''
@@ -106,15 +106,15 @@ class Solitaire2:
         return
 
     @staticmethod
-    def on_bits(bin: int) -> list[int]:
-        '''Get all on bits from an integer.'''
+    def on_bits(possible_moves: int) -> list[int]:
+        '''Get all on bits from a possible moves bitboard to split it into invidual moves.'''
         moves = []
         n = 0
-        while bin:
-            if bin & 1: # get least sig. bit
+        while possible_moves:
+            if possible_moves & 1: # get least sig. bit
                 moves.append(1 << n)
             n += 1
-            bin >>= 1 # remove least sig. bit
+            possible_moves >>= 1 # remove least sig. bit
         return moves
 
 def _view(bitboard: int, message: str, rows: int, cols: int) -> None:
