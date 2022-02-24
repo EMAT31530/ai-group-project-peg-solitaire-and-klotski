@@ -1,26 +1,17 @@
 ROWS, COLS = 7, 8
-BOARD_BITMASK = 7912633273359388 # English cross board shape
-DIRECTIONS = {'N': -8, 'E': 1, 'S': 8, 'W': -1}
-'''
-00011100
-00011100
-01111111
-01111111
-01111111
-00011100
-00011100
-'''
+BOARD_BITMASK = 0b00011100000111000111111101111111011111110001110000011100 # English cross board shape
+DIRECTIONS = {'N': -COLS, 'E': 1, 'S': COLS, 'W': -1}
 
 class Solitaire2():
     '''A two-player peg solitaire game class.'''
     def __init__(self):
         self.bitboard1: int = 0b00001100000001000001001100110110011001000001000000011000
-        self.bitboard2: int = ~(self.bitboard1|1<<27) & BOARD_BITMASK
-        self.player = 1 # player 1 = 1, player 2 = 0
+        self.bitboard2: int = 0b10000000110000110110001000001000110110000110000000100
+        self.player = True # player 1 = True, player 2 = False
         self.overlap = self.bitboard1 | self.bitboard2
 
     def render(self) -> None:
-        '''Process and print the current state to the terminal.'''
+        '''Process and print the current state to the terminal in colour.'''
         for row in range(ROWS):
             output_row = ''
             for n in range(COLS*row,COLS*row+COLS):
