@@ -6,7 +6,7 @@ Project to apply search algorithms for peg solitaire and klotski puzzles.
 - [ ] Research and come up with heuristics
 - [x] Code basic peg solitaire
 - [x] Code basic klotski
-- [ ] Code two-player peg solitaire without search
+- [x] Code two-player peg solitaire without search
 - [ ] Apply different search algorithms
 - [ ] Measure run time and memory usage of the search algorithms
 - [ ] Repeat for harder versions of those puzzles such as two-player versions
