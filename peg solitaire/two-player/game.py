@@ -4,7 +4,7 @@ DEFAULT_BOARD2 = 0b10000000110000110110001000001000110110000110000000100
 
 class Solitaire2:
     '''A two-player peg solitaire game using a bitboard implementation.'''
-    def __init__(self, board1: int = DEFAULT_BOARD1, board2: int = DEFAULT_BOARD2, rows: int = 7, cols: int = 8):
+    def __init__(self, board1: int = DEFAULT_BOARD1, board2: int = DEFAULT_BOARD2, rows: int = 7, cols: int = 8, display: bool = False):
         self.bitboard1 = board1
         self.bitboard2 = board2
         self.ROWS = rows
@@ -12,16 +12,21 @@ class Solitaire2:
         self.DIRECTIONS = {'N': -self.COLS, 'E': 1, 'S': self.COLS, 'W': -1}
         self.player = True # player 1 = True, player 2 = False
         self.overlap = self.bitboard1 | self.bitboard2
+        self.player_moves = self.is_game_over()
+        self.display = display
+        if self.display:
+            self.render()
 
     def step(self, direction: str, move_start: int = None) -> None:
         if move_start:
             self.make_move(move_start, self.DIRECTIONS[direction])
             self.overlap = self.bitboard1 | self.bitboard2
-            # self.render()
         else:
             print('No move')
         self.player = not self.player
-        player_moves = self.is_game_over()
+        self.player_moves = self.is_game_over()
+        if self.display:
+            self.render()
         return
 
     def render(self) -> None:
@@ -78,14 +83,14 @@ class Solitaire2:
                 all_moves[d] = moves
         return all_moves
     
-    def legal_moves(self, direction: int, player_bits) -> int:
+    def legal_moves(self, direction: int, player_bits: int) -> int:
         '''Find the legal moves for a player in a direction given the current board state.'''
         adjacent_pegs = int(player_bits * 2**direction) & self.overlap
         end_moves = int(adjacent_pegs * 2**direction) & ~player_bits & ENGLISH_BITMASK 
         start_moves = int(end_moves * 2**-(2*direction)) & ENGLISH_BITMASK 
         return start_moves
 
-    def make_move(self, start: int, direction:int) -> None:
+    def make_move(self, start: int, direction: int) -> None:
         '''Update the board state with the move.'''
         # calculate middle and end position
         middle = int(start * 2**direction)
