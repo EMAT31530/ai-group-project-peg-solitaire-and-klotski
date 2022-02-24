@@ -1,8 +1,3 @@
-from dataclasses import dataclass
-import random
-import time
-#import timeit
-
 ROWS, COLS = 7, 8
 BOARD_BITMASK = 7912633273359388 # English cross board shape
 DIRECTIONS = {'N': -8, 'E': 1, 'S': 8, 'W': -1}
@@ -15,20 +10,14 @@ DIRECTIONS = {'N': -8, 'E': 1, 'S': 8, 'W': -1}
 00011100
 00011100
 '''
-@dataclass 
-class State():
-    '''Representation of the board game in binary.'''
-    bitboard1: int = 3382180283944984
-    '''
-    00001100
-    00000100
-    00010011
-    00110110
-    01100100
-    00010000
-    00011000
-    '''
-    bitboard2: int = ~(bitboard1|1<<27) & BOARD_BITMASK
+
+class Solitaire2():
+    '''A two-player peg solitaire game class.'''
+    def __init__(self):
+        self.bitboard1: int = 0b00001100000001000001001100110110011001000001000000011000
+        self.bitboard2: int = ~(self.bitboard1|1<<27) & BOARD_BITMASK
+        self.player = 1 # player 1 = 1, player 2 = 0
+        self.overlap = self.bitboard1 | self.bitboard2
 
     def render(self) -> None:
         '''Process and print the current state to the terminal.'''
@@ -52,22 +41,14 @@ class State():
         print('\n')
         return
 
-class Solitaire2():
-    '''A two-player peg solitaire game class.'''
-    def __init__(self):
-        self.state = State()
-        self.player = 1 # player 1 = 1, player 2 = 0
-        self.overlap = self.state.bitboard1 | self.state.bitboard2
-        #self.state.render()
-
     def is_game_over(self):
         '''Checks whether both players are unable to move, if so scores are tallied.'''
         player_moves = self.all_legal_moves(self.player)
         if not player_moves:
             opponent_moves = self.all_legal_moves(not self.player)
             if not opponent_moves:
-                tally1 = self.state.bitboard1.bit_count()
-                tally2 = self.state.bitboard2.bit_count()
+                tally1 = self.bitboard1.bit_count()
+                tally2 = self.bitboard2.bit_count()
                 if tally2 <= tally1:
                     self.done = -1
                 else:
@@ -81,9 +62,9 @@ class Solitaire2():
     def all_legal_moves(self, player: bool) -> dict:
         '''Find legal moves in all directions for a player.'''
         if player == 1:
-            player_bits = self.state.bitboard1
+            player_bits = self.bitboard1
         else: 
-            player_bits = self.state.bitboard2
+            player_bits = self.bitboard2
         all_moves = {}
         for d in DIRECTIONS:
             moves = self.legal_moves(DIRECTIONS[d], player_bits)
@@ -104,13 +85,13 @@ class Solitaire2():
         middle = int(start * 2**direction)
         end =  int(middle * 2**direction)
         # remove start, middle and end peg bits from bitboards
-        self.state.bitboard1 &= ~(start|middle|end)
-        self.state.bitboard2 &= ~(start|middle|end)
+        self.bitboard1 &= ~(start|middle|end)
+        self.bitboard2 &= ~(start|middle|end)
         # add end peg bit back into current players bitboard
         if self.player == 1:
-            self.state.bitboard1 |= end
+            self.bitboard1 |= end
         else:
-            self.state.bitboard2 |= end
+            self.bitboard2 |= end
         return
 
     @staticmethod
@@ -142,26 +123,3 @@ def _view(bitboard, message) -> None:
         print(output_row)
     print(f'{message}\n')
     return
-
-def main():
-    for playout in range(100000):
-        game = Solitaire2()
-        player_moves = game.is_game_over()
-        while not game.done:
-            if player_moves:
-                rand_dir = random.choice(list(player_moves))
-                rand_legal_moves = player_moves[rand_dir]
-                rand_move = random.choice(game.on_bits(rand_legal_moves))
-                game.make_move(rand_move, DIRECTIONS[rand_dir])
-            #game.state.render()
-            game.overlap = game.state.bitboard1 | game.state.bitboard2
-            game.player = not game.player
-            player_moves = game.is_game_over()
-        rewards.append(game.done)
-
-if __name__ == "__main__":
-    #print(timeit.timeit(stmt=testcode,number=100000))
-    rewards = []
-    main()
-    p = rewards.count(1)/len(rewards)
-    print(f'player 1 win percentage: {p}')
