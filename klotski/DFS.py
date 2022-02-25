@@ -14,11 +14,11 @@ NU = 8
 Blank = 9
 
 
-board_1 = [[Soilder, King, NU, Soilder],
-            [General1x2, NU, NU, General1x2],
-            [NU, General2x1, NU, NU],
-            [General2x1, NU, General2x1, NU],
-            [Blank, Soilder, Soilder, Blank]]
+board_1 = [[General2x1, King, NU, General2x1],
+            [NU, NU, NU, NU],
+            [General2x1, General1x2, NU, General2x1],
+            [NU, Soilder, Soilder, NU],
+            [Soilder, Blank, Blank, Soilder]]
 
 print(board_1)
 
@@ -125,18 +125,20 @@ def Possibilities(move):
     return result
 
 
+def board_code(board):
+    """ Creates hash code for each board state which is unique up to rotational translation of board."""
+    return hash(tuple(map(tuple, board)))
+
+
 # Return a list, each elements in steps represents each step
-def DFS(move):
-    # Storage in 1d array
-    Moves = [move]
-
-
-    itemposition = [-1]
+def DFS(board):
+    # Store in array
+    Moves = [board]
+    chessposition = [-1]
     indexposition = [0]
-
-    # start DFS
     EndDFS = -1
     steps = 0
+    hashstorage = []
 
     while True:
 
@@ -150,17 +152,21 @@ def DFS(move):
         if EndDFS != -1:
             break
 
-        # If not break
+
         Continuemove = indexposition[-2] if (len(indexposition) >= 2) else indexposition[-1]
         endmove = len(Moves)
         for j in range(indexposition[-1], endmove):
-            Possibles = Possibilities(Moves[j])
+
+
+            print(hashstorage)
             # Filtering any already existed possible steps
-            for k in Possibles:
-                if k in Moves[Continuemove:]:
+            for k in hashstorage:
+                if k in Moves[Continuemove]:
                     continue
-                itemposition.append(j)
+
+                chessposition.append(j)
                 Moves.append(k)
+                hashstorage = hashstorage.append(board_code(Moves[j]))
 
         indexposition.append(endmove)
         steps += 1
@@ -168,16 +174,17 @@ def DFS(move):
     # record the whole process
     result = [Moves[EndDFS]]
     while EndDFS != 0:
-        EndDFS = itemposition[EndDFS]
+        EndDFS = chessposition[EndDFS]
         result.insert(0, Moves[EndDFS])
 
     return result
 
 
 
+
 starttime = time.time()
 result = DFS(board_1)
-endtime = time.time()
+
 print('Time cost for this solution: ', endtime - starttime)
 print('Number of steps: ', len(result))
 
