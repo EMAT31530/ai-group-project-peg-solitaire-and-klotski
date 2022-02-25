@@ -130,7 +130,3 @@ def find_solution(board):
 
 find_solution(board)
 
-
-random.random()
-
-
