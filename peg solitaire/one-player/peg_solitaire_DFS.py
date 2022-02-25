@@ -76,13 +76,9 @@ def find_solution(board):
 		""" Creates hash code for each board state which is unique up to rotational translation of board."""
 		return hash(tuple(map(tuple, board)))
 
-	def symmetric_boards(board):
-		""" Returns list of equvalent boards under symmetry. """
-		return [np.rot90(np.copy(board), i) for i in range(1, 4)]
-
 	visited = {board_code(board)}
 	stats = {"End states found:": 0, "Nodes visited:": 0, "Copies bypassed:": 0}
-
+	
 	def dfs(board, solution = []):
 		""" Function uses DFS algorithm to find solution. """
 
@@ -127,6 +123,5 @@ def find_solution(board):
 	print("Runtime:", perf_counter() - t, "seconds\n")
 	print("="*65)
 	
-
 find_solution(board)
 
