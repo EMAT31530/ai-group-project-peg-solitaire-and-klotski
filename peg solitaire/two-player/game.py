@@ -1,108 +1,136 @@
-from dataclasses import dataclass
+ENGLISH_BITMASK = 0b00011100000111000111111101111111011111110001110000011100
+DEFAULT_BOARD1 = 0b00001100000001000001001100110110011001000001000000011000
+DEFAULT_BOARD2 = 0b10000000110000110110001000001000110110000110000000100
 
-@dataclass 
-class State():
-    '''Representation of the board game in binary.'''
-    bitboard1: int = 9552747565056 #161107674112
-    '''
-    00000000
-    00001000
-    10110000
-    00101100
-    00100000
-    00010000
-    00000000
-    '''
-    bitboard2: int = 13546001516593184 #106103477157904
-    '''
-    00110000
-    00100000
-    00000100
-    01000000
-    10000110
-    00000000
-    00100000
-    '''
-    def possible_moves(self, player: bool, direction: str) -> int:
-        '''Find all possible next moves given the state.'''
-        if player:
-            friendly_bits, enemy_bits = self.bitboard1, self.bitboard2
-        else: 
-            friendly_bits, enemy_bits = self.bitboard2, self.bitboard1
+class Solitaire2:
+    '''A two-player peg solitaire game using a bitboard implementation.'''
+    def __init__(self, board1: int = DEFAULT_BOARD1, board2: int = DEFAULT_BOARD2, rows: int = 7, cols: int = 8, display: bool = False):
+        self.bitboard1 = board1
+        self.bitboard2 = board2
+        self.ROWS = rows
+        self.COLS = cols
+        self.DIRECTIONS = {'N': -self.COLS, 'E': 1, 'S': self.COLS, 'W': -1}
+        self.player = True # player 1 = True, player 2 = False
+        self.overlap = self.bitboard1 | self.bitboard2
+        self.player_legal_moves = self.is_game_over()
+        self.display = display
+        if self.display:
+            self.render()
 
-        overlap = self.bitboard1 | self.bitboard2
-        directions = {'N': -8, 'E': 1, 'S': 8, 'W': -1}
-        d = directions[direction]
-        adjacent_pegs = int(friendly_bits * 2**d) & overlap
-        end = int(adjacent_pegs * 2**d) & ~friendly_bits & BOARD_BIMASK
-        start = int(end * 2**-(2*d)) & BOARD_BIMASK
-        return start
-    
+    def step(self, move_start: int = None, direction: str = None) -> None:
+        if move_start:
+            self.make_move(move_start, self.DIRECTIONS[direction])
+            self.overlap = self.bitboard1 | self.bitboard2
+        elif self.display:
+            print('No move')
+        if self.display:
+            self.render()
+        self.player = not self.player # change player
+        self.player_legal_moves = self.is_game_over()
+        return
+
     def render(self) -> None:
-        '''Process and print the current state to the terminal.'''
-        for row in range(ROWS):
+        '''Process and print the current game state to the terminal in colour.'''
+        for row in range(self.ROWS):
             output_row = ''
-            for n in range(COLS*row,COLS*row+COLS):
+            for n in range(self.COLS*row,self.COLS*row+self.COLS):
                 nth_bit = 1 << n
-                if BOARD_BIMASK & nth_bit:
+                if ENGLISH_BITMASK & nth_bit: # if on the board
                     peg = (self.bitboard1 & nth_bit and 1) + 2*(self.bitboard2 & nth_bit and 1)
-                    if peg == 0:
-                        output_row += '\033[39m o'
-                    elif peg == 1:
-                                output_row += '\033[34m o'
-                    elif peg == 2:
-                        output_row += '\033[31m o'
+                    if peg == 0: # empty peg
+                        output_row += '\033[39m o' # white circle
+                    elif peg == 1: # player 1 peg
+                        output_row += '\033[34m o' # blue circle
+                    elif peg == 2: # player 2 peg
+                        output_row += '\033[31m o' # red circle
                     else:
                         raise ValueError('State not valid') 
-                else:
-                    output_row+='\033[39m  '
+                else: # not on the board
+                    output_row += '  '
             print(output_row)
         print('\n')
         return
 
-class Solitaire2():
-    '''A two-player peg solitaire game class.'''
-    def __init__(self):
-        self.state = State()
-        self.player = 1 # player 1 = 1, player 2 = -1
-        self.state.render()
-        
-    def make_move(self):
-        '''Applies an action.'''
-        if self.player == 1:
-            pass
+    def is_game_over(self) -> dict:
+        '''Checks whether both players are unable to move, if so scores are tallied. 
+        Returns all starting squares that have a legal move in a direction.'''
+        player_legal_moves = self.all_legal_moves(self.player)
+        if not player_legal_moves:
+            opponent_moves = self.all_legal_moves(not self.player)
+            if not opponent_moves:
+                tally1 = self.bitboard1.bit_count()
+                tally2 = self.bitboard2.bit_count()
+                if tally2 <= tally1:
+                    self.done = -1
+                else:
+                    self.done = 1
+            else:
+                self.done = 0
         else:
-            pass
-        self.state.render()
-        reward, done = self.is_game_over()
-        self.player *= -1 # change player
-        return
+            self.done = 0
+        return player_legal_moves
 
-    def is_game_over(self):
-        '''Checks whether any terminal states have been reached.'''
-        return
-
-    def ask_for_action(self):
-        '''Asks user for players next move.'''
-        return
-                
+    def all_legal_moves(self, player: bool) -> dict:
+        '''Find legal moves in all directions for a player.'''
+        if player == 1:
+            player_bits = self.bitboard1
+        else: 
+            player_bits = self.bitboard2
+        all_moves = {}
+        for d in self.DIRECTIONS:
+            moves = self.legal_moves(self.DIRECTIONS[d], player_bits)
+            if moves:
+                all_moves[d] = moves
+        return all_moves
     
-def main():
-    game = Solitaire2()
-    game.state.bitboard1 = game.state.possible_moves(1,'W') 
-    game.state.bitboard2 = 0
-    game.state.render() 
+    def legal_moves(self, direction: int, player_bits: int) -> int:
+        '''Find the legal moves for a player in a direction given the current board state.'''
+        adjacent_pegs = int(player_bits * 2**direction) & self.overlap
+        end_moves = int(adjacent_pegs * 2**direction) & ~player_bits & ENGLISH_BITMASK 
+        start_moves = int(end_moves * 2**-(2*direction)) & ENGLISH_BITMASK 
+        return start_moves
 
-if __name__ == "__main__":
-    ROWS, COLS = 7, 8
-    BOARD_BIMASK = 15825266546718776 #124141734710812 # English cross board shape
-    '''
-    00111000
-    00111000
-    11111110
-    11111110
-    11111110
-    00111000
-    00111000
-    '''
-    main()
+    def make_move(self, start: int, direction: int) -> None:
+        '''Update the board state with the move.'''
+        # calculate middle and end position
+        middle = int(start * 2**direction)
+        end =  int(middle * 2**direction)
+        # remove start, middle and end peg bits from bitboards
+        self.bitboard1 &= ~(start|middle|end)
+        self.bitboard2 &= ~(start|middle|end)
+        # add end peg bit back into current players bitboard
+        if self.player == 1:
+            self.bitboard1 |= end
+        else:
+            self.bitboard2 |= end
+        return
+
+    @staticmethod
+    def on_bits(possible_moves: int) -> list[int]:
+        '''Get all on bits from a possible moves bitboard to split it into invidual moves.'''
+        moves = []
+        n = 0
+        while possible_moves:
+            if possible_moves & 1: # get least sig. bit
+                moves.append(1 << n)
+            n += 1
+            possible_moves >>= 1 # remove least sig. bit
+        return moves
+
+def _view(bitboard: int, message: str = '', rows: int = 7, cols: int = 8) -> None:
+    '''Print a bitboard for debugging purposes.'''
+    for row in range(rows):
+        output_row = ''
+        for n in range(cols*row, cols*row + cols):
+            nth_bit = 1 << n
+            if ENGLISH_BITMASK & nth_bit: # if on the board
+                peg = bitboard & nth_bit and 1
+                if peg == 0:
+                    output_row += '\033[39m o'
+                elif peg == 1:
+                    output_row += '\033[35m o'
+            else:
+                output_row+='\033[32m -'
+        print(output_row)
+    print(f'{message}\n')
+    return
