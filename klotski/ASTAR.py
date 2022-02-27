@@ -1,8 +1,8 @@
 import copy
-import pprint
 import tkinter as tk
 import threading
 import time
+
 
 def operation_1(liste, state):
     places_of_1 = []
@@ -59,6 +59,7 @@ def operation_1(liste, state):
                 pass
     return big_one
 
+
 def operation_2(liste, state):
     p_for_2 = []
     for i in range(len(liste)):
@@ -86,7 +87,7 @@ def operation_2(liste, state):
                     return (liste)
         except:
             pass
-        
+
     if state == "up":
         try:
             if p_for_2[1][0] - 1 >= 0 and p_for_2[0][0] - 1 >= 0:
@@ -107,7 +108,8 @@ def operation_2(liste, state):
                     return (liste)
         except:
             pass
-        
+
+
 def operation_3(liste, state):
     p_for_3 = []
     for i in range(len(liste)):
@@ -159,6 +161,7 @@ def operation_3(liste, state):
         except:
             pass
 
+
 def operation_4(liste, state):
     place_of_4 = []
     place_of_second_4 = []
@@ -181,9 +184,9 @@ def operation_4(liste, state):
                     return (liste)
         except:
             pass
-        
+
     if state == "up":
-        try:  
+        try:
             if place_of_4[0] - 1 >= 0:
                 if liste[place_of_4[0] - 1][place_of_4[1]] == 0 and liste[place_of_4[0] - 1][place_of_4[1] + 1] == 0 and \
                         liste[place_of_4[0]][place_of_4[1] + 1] == 4 and liste[place_of_4[0] + 1][
@@ -194,7 +197,7 @@ def operation_4(liste, state):
                     return (liste)
         except:
             pass
-        
+
     if state == "down":
         try:
             if place_of_second_4[0] - 1 >= 0 and place_of_second_4[1] - 1 >= 0:
@@ -211,7 +214,7 @@ def operation_4(liste, state):
         except:
             pass
     if state == "right":
-        try:  
+        try:
             if place_of_second_4[1] - 1 >= 0 and place_of_second_4[0] - 1 >= 0:
                 if liste[place_of_second_4[0] - 1][place_of_second_4[1] + 1] == 0 and liste[place_of_second_4[0]][
                     place_of_second_4[1] + 1] == 0 and \
@@ -225,7 +228,8 @@ def operation_4(liste, state):
                     return (liste)
         except:
             pass
- 
+
+
 class movements():
     def __init__(self, cost, parent, expanded, initial_state, queue, goal_state, my_list, state, cost_to_main_parent):
         self.cost = cost
@@ -237,32 +241,36 @@ class movements():
         self.my_list = my_list
         self.state = state
         self.cost_to_main_parent = cost_to_main_parent
+
     def right(self, list):
         self.expanded.append(operation_4(copy.deepcopy(list), "right"))
         self.expanded.append(operation_3(copy.deepcopy(list), "right"))
         self.expanded.append(operation_2(copy.deepcopy(list), "right"))
         self.expanded.append(operation_1(copy.deepcopy(list), "right"))
+
     def down(self, list):
         self.expanded.append(operation_4(copy.deepcopy(list), "down"))
         self.expanded.append(operation_3(copy.deepcopy(list), "down"))
         self.expanded.append(operation_2(copy.deepcopy(list), "down"))
         self.expanded.append(operation_1(copy.deepcopy(list), "down"))
+
     def up(self, list):
         self.expanded.append(operation_4(copy.deepcopy(list), "up"))
         self.expanded.append(operation_3(copy.deepcopy(list), "up"))
         self.expanded.append(operation_2(copy.deepcopy(list), "up"))
         self.expanded.append(operation_1(copy.deepcopy(list), "up"))
+
     def left(self, list):
         self.expanded.append(operation_4(copy.deepcopy(list), "left"))
         self.expanded.append(operation_3(copy.deepcopy(list), "left"))
         self.expanded.append(operation_2(copy.deepcopy(list), "left"))
         self.expanded.append(operation_1(copy.deepcopy(list), "left"))
 
-
     def A_star_search(self):
-        first = movements(0, "", self.expanded, self.initial_state, self.queue, self.goal_state, self.my_list, self.state, 1)
+        first = movements(0, "", self.expanded, self.initial_state, self.queue, self.goal_state, self.my_list,
+                          self.state, 1)
         self.parent = first
-        self.queue.append((first,first.cost))
+        self.queue.append((first, first.cost))
         self.left(copy.deepcopy(self.initial_state))
         self.right(copy.deepcopy(self.initial_state))
         self.down(copy.deepcopy(self.initial_state))
@@ -282,8 +290,8 @@ class movements():
                                         position_of_left_down_4.append(r[i].index(4))
                                 cost = ((3 - position_of_left_down_4[0]) ** 2 + position_of_left_down_4[1] ** 2) ** 0.5
                                 obj = movements(cost + self.parent.cost_to_main_parent, self.parent, self.expanded,
-                                                 self.initial_state, self.queue, self.goal_state, self.my_list,
-                                                 r, self.parent.cost_to_main_parent + 1.0)
+                                                self.initial_state, self.queue, self.goal_state, self.my_list,
+                                                r, self.parent.cost_to_main_parent + 1.0)
                                 tmp.append(obj)
                         else:
                             for i in range(len(k)):
@@ -292,22 +300,26 @@ class movements():
                                     position_of_left_down_4.append(k[i].index(4))
                             cost = ((3 - position_of_left_down_4[0]) ** 2 + position_of_left_down_4[1] ** 2) ** 0.5
                             obj = movements(cost + self.parent.cost_to_main_parent, self.parent, self.expanded,
-                                             self.initial_state, self.queue, self.goal_state, self.my_list,
-                                             k, self.parent.cost_to_main_parent + 1.0)
+                                            self.initial_state, self.queue, self.goal_state, self.my_list,
+                                            k, self.parent.cost_to_main_parent + 1.0)
                             tmp.append(obj)
             self.expanded = []
+
             def takeSecond(elem):
                 return elem[1]
+
             for i in tmp:
                 if i.state not in [i[0].state for i in self.queue]:
-                    self.queue.append((i,i.cost))
+                    self.queue.append((i, i.cost))
                     self.queue.sort(key=takeSecond)
-            tmp=[]
+
+            tmp = []
+
             for i in self.queue:
-                if i[0].state[2][0]==4 and i[0].state[2][1]==4 and i[0].state[3][0]==4 and i[0].state[3][1]==4:
-                    self.my_list=[i[0]]
+                if i[0].state[2][0] == 4 and i[0].state[2][1] == 4 and i[0].state[3][0] == 4 and i[0].state[3][1] == 4:
+                    self.my_list = [i[0]]
                     for i in self.my_list:
-                        if type(i.parent)!=str:
+                        if type(i.parent) != str:
                             self.my_list.append(i.parent)
                     return False
                 if i[0].state not in visited:
@@ -318,18 +330,6 @@ class movements():
                     self.up(copy.deepcopy(i[0].state))
                     visited.append(i[0].state)
                     break
-
-
-# list1 = [ [1, 2, 1, 1],
-#        [1, 2, 4, 4],
-#        [3, 3, 4, 4],
-#        [1, 1, 0, 0] ]
-list1 = [ [1,2,3,4], [5,6,7,8], [9,10,11,12], [13,14,15,16] ]
-
-#####A* SEARCH######
-obj = movements(0, "", [], list1, [], [3, 0], [], list1, 0)
-obj.A_star_search()
-
 
 
 class BlockInterface(object):
@@ -385,7 +385,7 @@ class BlockInterface(object):
 
     def activate(self, G):
         thread = threading.Thread(target=lambda: self.solve_puzzle(G))
-        thread.daemon = True  
+        thread.daemon = True
         thread.start()
 
     def solve_puzzle(self, G):
@@ -398,17 +398,30 @@ class BlockInterface(object):
                 i += 1
             except IndexError:
                 break
-                
+
+
 def start_simulation(G):
     root = tk.Tk()
     root.resizable(0, 0)
     BlockInterface(root, G)
     root.mainloop()
 
-if __name__ == "__main__":
 
-    x=[i.state for i in obj.my_list]
-    x.reverse()
-    start_simulation(x)
+list1 = [[1, 2, 1, 1],
+         [1, 2, 4, 4],
+         [3, 3, 4, 4],
+         [1, 1, 0, 0]]
 
+obj = movements(0, "", [], list1, [], [3, 0], [], list1, 0)
+starttime = time.time()
+obj.A_star_search()
+
+y = [x.state for x in obj.my_list]
+y.reverse()
+start_simulation(y)
+
+endtime = time.time()
+print('Time cost for this solution: ', endtime - starttime)
+
+print('Number of steps: ', len(y))
 
