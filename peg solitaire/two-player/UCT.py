@@ -1,22 +1,32 @@
 import game as g
 
-def UCT_search(s0):
+class Node:
+    def __init__(self, state: int) -> None:
+        self.parent = None
+        self.children = []
+        self.state = state
+        self.visit_count = 0
+        self.q = 0 # simulation reward
+    
+    def add_child(self, child):
+        child.parent = self
+        self.children.append(child)
+
+def UCT_search(s0: int):
     return
 
-def simulate(board, s0):
+def tree_policy(v: Node):
     return
 
-def sim_tree(board):
+def expand(v: Node):
     return
 
-def sim_default(board):
+def best_child(v: Node, c: int):
     return
 
-def select_move(board, s, c):
+def default_policy(s: int):
     return
 
-def backup(nodes, z):
+def backup(v: Node, z: int):
     return
 
-def new_node(s):
-    return
