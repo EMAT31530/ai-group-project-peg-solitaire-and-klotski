@@ -27,6 +27,11 @@ def best_child(v: Node, c: int):
 def default_policy(s: int):
     return
 
-def backup(v: Node, z: int):
+def backup(v: Node, reward: int):
+    while v:
+        v.visit_count += 1
+        v.q += reward
+        reward *= -1
+        v = v.parent
     return
 
