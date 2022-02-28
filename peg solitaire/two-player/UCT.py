@@ -5,14 +5,15 @@ from random import choice, shuffle
 ROWS, COLS = 7, 8
 DIRECTIONS = [-COLS, 1, COLS, -1] # N,E,S,W
 BOARD_BITMASK = 0b00011100000111000111111101111111011111110001110000011100
+DEFAULT_BOARD1 = 0b00001100000001000001001100110110011001000001000000011000
+DEFAULT_BOARD2 = 0b10000000110000110110001000001000110110000110000000100
 
 class UCT:
-    'Monte Carlo tree searcher. First rollout the tree then choose a move.'
-
+    'Monte Carlo tree search using UCT algorithm. First rollout the tree then choose a move.'
     def __init__(self, C=1):
         self.Q = defaultdict(int)  # total reward of each node
         self.N = defaultdict(int)  # total visit count of each node
-        self.tree = dict()  # children of each node
+        self.tree = dict()  # game tree of node states
         self.C = C # exploration weight
 
     def choose(self, node):
@@ -104,12 +105,15 @@ class Node():
         while directions:
             shuffle(directions)
             random_direction = directions.pop()
-            adjacent_pegs = self.bitshift(self.bitboards[self.player], random_direction) & self.__hash__()
-            legal_ends = self.bitshift(adjacent_pegs, random_direction) & ~self.bitboards[self.player] & BOARD_BITMASK 
+            adjacent_pegs = self._bitshift(self.bitboards[self.player], random_direction) & self.__hash__()
+            legal_ends = self._bitshift(adjacent_pegs, random_direction) & ~self.bitboards[self.player] & BOARD_BITMASK
+            render(legal_ends,0, f'legal_ends in direction {random_direction}')
             if legal_ends:
-                split_ends = self.split(legal_ends)
+                split_ends = self._split(legal_ends)
                 random_end = choice(split_ends)
-                end_to_start = self.smudge(random_end, -random_direction)
+                render(random_end,0, 'random end')
+                end_to_start = self._smudge(random_end, -random_direction)
+                render(end_to_start,0, 'end to start')
                 bitboard1 = self.bitboards[1] & ~end_to_start
                 bitboard2 = self.bitboards[0] & ~end_to_start
                 if self.player == 1:
@@ -120,8 +124,8 @@ class Node():
         return None
     
     @staticmethod
-    def smudge(binary: int, direction: int) -> int:
-        '''Dilate twice the on-bits in a direction.'''
+    def _smudge(binary: int, direction: int) -> int:
+        '''Dilate twice the on-bits in a `direction`.'''
         if direction < 0:
             direction = -direction
             return binary | (binary >> direction) | (binary >> 2*direction)
@@ -129,8 +133,8 @@ class Node():
             return binary | (binary << direction) | (binary << 2*direction)
     
     @staticmethod
-    def bitshift(binary: int, offset: int) -> int:
-        '''Does right or left bitshift depending on sign of offset.'''
+    def _bitshift(binary: int, offset: int) -> int:
+        '''Does right or left bitshift depending on sign of `offset`.'''
         if offset < 0:
             offset = -offset
             return binary >> offset
@@ -138,8 +142,8 @@ class Node():
             return binary << offset
 
     @staticmethod
-    def split(legal_moves: int) -> list[int]:
-        '''Split legal moves into invidual moves by the on-bits.'''
+    def _split(legal_moves: int) -> list[int]:
+        '''Split `legal moves` into invidual moves by the on-bits.'''
         seperate_moves = []
         n = 0
         while legal_moves:
@@ -166,6 +170,36 @@ class Node():
         else:
             return NotImplemented
 
-n = Node(0,0,0)
-a = n.smudge(0b10000000,-3)
-print(bin(a))
+def render(bitboard1: int = 0, bitboard2: int = 0, message: str = '') -> None:
+        '''Print the bitboards in colour.'''
+        for row in range(ROWS):
+            output_row = ''
+            for n in range(COLS*row,COLS*row+COLS):
+                nth_bit = 1 << n
+                if BOARD_BITMASK & nth_bit: # if on the board
+                    peg = (bitboard1 & nth_bit and 1) + 2*(bitboard2 & nth_bit and 1)
+                    if peg == 0: # empty peg
+                        output_row += '\033[39m o' # white circle
+                    elif peg == 1: # player 1 peg
+                        output_row += '\033[34m o' # blue circle
+                    elif peg == 2: # player 2 peg
+                        output_row += '\033[31m o' # red circle
+                    else:
+                        raise ValueError('State not valid') 
+                else: # not on the board
+                    if bitboard1 & nth_bit:
+                        output_row += '\033[32m -' # green
+                    elif bitboard2 & nth_bit:
+                        output_row += '\033[35m -' # magenta
+                    else: # no bugs
+                        output_row += '\033[39m -' # white
+            print(output_row)
+        print(f'{message}\n')
+        return
+
+#n = Node(0b10010010000000000000000000,0b1000101000001000000000000,1)
+n = Node(DEFAULT_BOARD1,DEFAULT_BOARD2,1)
+render(n.bitboards[1], n.bitboards[0])
+child = n.find_random_child()
+render(child.bitboards[1], child.bitboards[0], 'child')
+pass
