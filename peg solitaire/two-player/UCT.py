@@ -1,7 +1,10 @@
 from collections import defaultdict
 import math
-from random import choice
+from random import choice, shuffle
 
+ROWS, COLS = 7, 8
+DIRECTIONS = [-COLS, 1, COLS, -1] # N,E,S,W
+BOARD_BITMASK = 0b00011100000111000111111101111111011111110001110000011100
 
 class UCT:
     'Monte Carlo tree searcher. First rollout the tree then choose a move.'
@@ -91,27 +94,47 @@ class UCT:
 
 class Node():
     '''A bitboard representation of a two-player peg solitaire board state.'''
-
-    def find_tree(self):
-        'All possible successors of this board state'
-        return set()
+    def __init__(self, bitboard1: int, bitboard2: int, current_player: bool) -> None:
+        self.bitboards = [bitboard1, bitboard2]
+        self.player = current_player
 
     def find_random_child(self):
-        'Random successor of this board state (for more efficient simulation)'
-        return None
+        'Random successor of this board state.'
+        directions = DIRECTIONS.copy()
+        while directions:
+            shuffle(directions)
+            random_direction = directions.pop()
+            adjacent_pegs = int(self.bitboards[self.player] * 2**random_direction) & (self.bitboards[0]|self.bitboards[1])
+            legal_ends = int(adjacent_pegs * 2**random_direction) & ~self.bitboards[self.player] & BOARD_BITMASK 
+            if legal_ends:
+                seperate_ends = self.split(legal_ends)
+        return random_child
 
+    @staticmethod
+    def split(legal_moves: int) -> list[int]:
+        '''Split legal moves into invidual moves by getting the integers' on bits.'''
+        seperate_moves = []
+        n = 0
+        while legal_moves:
+            if legal_moves & 1: # get least sig. bit
+                seperate_moves.append(1 << n)
+            n += 1
+            legal_moves >>= 1 # remove least sig. bit
+        return seperate_moves
+    
     def is_terminal(self):
-        'Returns True if the node has no tree'
+        'Returns True if the node has no tree.'
         return True
 
     def reward(self):
-        'Assumes `self` is terminal node. 1=win, 0=loss, .5=tie, etc'
+        'Assumes `self` is terminal node. 1=win, 0=loss, .5=tie, etc.'
         return 0
 
-    def __hash__(self):
-        'Nodes must be hashable'
-        return 123456789
+    def __hash__(self) -> int:
+        return self.bitboards[0] | self.bitboards[1]
 
-    def __eq__(node1, node2):
-        'Nodes must be comparable'
-        return True
+    def __eq__(self, other):
+        if isinstance(self, other.__class__):
+            return self.bitboards == other.bitboards
+        else:
+            return NotImplemented
