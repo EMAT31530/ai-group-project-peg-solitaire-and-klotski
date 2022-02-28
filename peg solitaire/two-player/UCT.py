@@ -100,20 +100,16 @@ class Node():
         self.player = current_player # player 1 = True, player 2 = False
 
     def find_random_child(self):
-        'Random successor of this board state.'
+        'Random successor node of this board state.'
         directions = DIRECTIONS.copy()
         while directions:
             shuffle(directions)
             random_direction = directions.pop()
-            adjacent_pegs = self._bitshift(self.bitboards[self.player], random_direction) & self.__hash__()
-            legal_ends = self._bitshift(adjacent_pegs, random_direction) & ~self.bitboards[self.player] & BOARD_BITMASK
-            render(legal_ends,0, f'legal_ends in direction {random_direction}')
+            legal_ends = self._legal_move_ends(self.bitboards[self.player],random_direction)
             if legal_ends:
                 split_ends = self._split(legal_ends)
                 random_end = choice(split_ends)
-                render(random_end,0, 'random end')
                 end_to_start = self._smudge(random_end, -random_direction)
-                render(end_to_start,0, 'end to start')
                 bitboard1 = self.bitboards[1] & ~end_to_start
                 bitboard2 = self.bitboards[0] & ~end_to_start
                 if self.player == 1:
@@ -121,11 +117,11 @@ class Node():
                 else:
                     bitboard2 |= random_end
                 return Node(bitboard1, bitboard2, not self.player)
-        return None
+        return Node(self.bitboards[1], self.bitboards[0], not self.player) # if current player has no moves, turn is skipped
     
     @staticmethod
     def _smudge(binary: int, direction: int) -> int:
-        '''Dilate twice the on-bits in a `direction`.'''
+        '''Dilate twice the on-bits of a `binary` number in a `direction`.'''
         if direction < 0:
             direction = -direction
             return binary | (binary >> direction) | (binary >> 2*direction)
@@ -152,14 +148,31 @@ class Node():
             n += 1
             legal_moves >>= 1 # remove least sig. bit
         return seperate_moves
-    
-    def is_terminal(self):
-        'Returns True if the node has no tree.'
+
+    def _legal_move_ends(self, bitboard: int, direction: int) -> int:
+        '''Get the ending squares of all legal moves from a players' `bitboard` in a `direction`. 
+        The on-bits in the returned integer represent where a players' pegs can move to.'''
+        adjacent_pegs = self._bitshift(bitboard, direction) & self.__hash__()
+        legal_ends = self._bitshift(adjacent_pegs, direction) & ~bitboard & BOARD_BITMASK
+        return legal_ends
+
+    def is_terminal(self) -> bool:
+        'Returns True if the node has no children. Meaning that both players have no legal moves.'
+        for p in [self.player, not self.player]:
+            for d in DIRECTIONS:
+                legal_ends = self._legal_move_ends(self.bitboards[p], d)
+                if legal_ends:
+                    return False
         return True
 
-    def reward(self):
-        'Assumes `self` is terminal node. 1=win, 0=loss, .5=tie, etc.'
-        return 0
+    def reward(self) -> bool:
+        'Assuming `self` is a terminal node, the player with the fewest pegs on the board wins. A tie gives player 2 the win.'
+        tally1 = self.bitboards[1].bit_count()
+        tally2 = self.bitboards[0].bit_count()
+        if tally2 <= tally1:
+            return 0 # player 2 wins
+        else:
+            return 1 # player 1 wins
 
     def __hash__(self) -> int:
         return self.bitboards[0] | self.bitboards[1]
@@ -197,9 +210,12 @@ def render(bitboard1: int = 0, bitboard2: int = 0, message: str = '') -> None:
         print(f'{message}\n')
         return
 
-#n = Node(0b10010010000000000000000000,0b1000101000001000000000000,1)
-n = Node(DEFAULT_BOARD1,DEFAULT_BOARD2,1)
-render(n.bitboards[1], n.bitboards[0])
-child = n.find_random_child()
-render(child.bitboards[1], child.bitboards[0], 'child')
+n = Node(0b1000000010000010000001000, 0b100000000000, 1)
+render(n.bitboards[1],n.bitboards[0])
+n = n.find_random_child()
+render(n.bitboards[1],n.bitboards[0])
+n = n.find_random_child()
+render(n.bitboards[1],n.bitboards[0])
+t = n.is_terminal()
+r = n.reward()
 pass
