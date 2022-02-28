@@ -17,13 +17,14 @@ class Node():
     def find_children(self) -> set:
         'All possible successors of this board state.'
         successors = []
-        for p in [self.player, not self.player]:
-            for d in DIRECTIONS:
-                legal_ends = self._legal_move_ends(self.bitboards[p], d)
-                if legal_ends:
-                    pass
-            if successors:
-                break
+        for direction in DIRECTIONS:
+            legal_ends = self._legal_move_ends(self.bitboards[self.player], direction)
+            if legal_ends:
+                split_ends = self._split(legal_ends)
+                for end in split_ends:
+                    successors.append( self._successor(end, direction) )
+        if not successors: 
+            successors.append( Node(self.bitboards[1], self.bitboards[0], not self.player) )
         return set(successors)
 
     def find_random_child(self):
@@ -64,7 +65,7 @@ class Node():
         else:
             return 1 # player 1 wins
 
-    def _successor(self, move_end, direction): 
+    def _successor(self, move_end: int, direction: int): 
         'Create a successor `node` given the ending square of the move and the `direction` it was moved.'
         # Dilate twice the on-bits of a binary number in a direction
         if direction < 0:
