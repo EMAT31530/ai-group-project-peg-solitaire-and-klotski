@@ -111,6 +111,81 @@ class Node():
         else:
             return NotImplemented
 
+class UCT:
+    'Monte Carlo tree search using UCT algorithm. First rollout the tree then choose a move.'
+    def __init__(self, C=1):
+        self.Q = defaultdict(int)  # total reward of each node
+        self.N = defaultdict(int)  # total visit count of each node
+        self.children = dict()  # children of each node
+        self.C = C # exploration weight
+
+    def choose(self, node: Node):
+        'Choose the best successor of node. (Choose a move in the game)'
+        if node.is_terminal():
+            raise RuntimeError(f'choose called on terminal node {node}')
+        if node not in self.children:
+            return node.find_random_child()
+
+        def score(n):
+            if self.N[n] == 0:
+                return float('-inf')  # avoid unseen moves
+            return self.Q[n] / self.N[n]  # average reward
+
+        return max(self.children[node], key=score)
+
+    def do_rollout(self, node: Node):
+        'Make the tree one layer better. (Train for one iteration.)'
+        path = self._tree_policy(node)
+        leaf = path[-1]
+        self._expand(leaf)
+        reward = self._default_policy(leaf)
+        self._backup(path, reward)
+
+    def _tree_policy(self, node: Node):
+        'Find an unexplored descendent of `node`'
+        path = []
+        while True:
+            path.append(node)
+            if node not in self.children or not self.children[node]:
+                # node is either unexplored or terminal
+                return path
+            unexplored = self.children[node] - self.children.keys()
+            if unexplored:
+                n = unexplored.pop()
+                path.append(n)
+                return path
+            node = self._best_child(node)  # descend a layer deeper
+
+    def _expand(self, node: Node):
+        'Update the `tree` dict with the tree of `node`'
+        if node in self.children:
+            return  # already expanded
+        self.children[node] = node.find_children()
+
+    def _default_policy(self, node: Node):
+        'Returns the reward for a random simulation (to completion) of `node`'
+        invert_reward = True
+        while True:
+            if node.is_terminal():
+                reward = node.reward()
+                return 1 - reward if invert_reward else reward
+            node = node.find_random_child()
+            invert_reward = not invert_reward
+
+    def _backup(self, path, reward):
+        'Send the reward back up to the ancestors of the leaf.'
+        for node in reversed(path):
+            self.N[node] += 1
+            self.Q[node] += reward
+            reward = 1 - reward  # 1 for me is 0 for my enemy, and vice versa
+
+    def _best_child(self, node: Node):
+        '''Select the best child `node`, balancing exploration & exploitation. 
+        All children should already be expanded.'''
+        assert all(n in self.children for n in self.children[node])
+        log_N_vertex = math.log(self.N[node])
+        return max(self.children[node], key = lambda n: self.Q[n] / self.N[n] + self.C * math.sqrt(log_N_vertex / self.N[n]))
+
 def render(bitboard1: int = 0, bitboard2: int = 0, message: str = '') -> None:
         'Print the bitboards in colour.'
         for row in range(ROWS):
@@ -138,77 +213,9 @@ def render(bitboard1: int = 0, bitboard2: int = 0, message: str = '') -> None:
         print(f'{message}\n')
         return
 
-class UCT:
-    'Monte Carlo tree search using UCT algorithm. First rollout the tree then choose a move.'
-    def __init__(self, C=1):
-        self.Q = defaultdict(int)  # total reward of each node
-        self.N = defaultdict(int)  # total visit count of each node
-        self.tree = dict()  # game tree of node states
-        self.C = C # exploration weight
+def play_game():
+    tree = UCT()
+    pass
 
-    def choose(self, node: Node):
-        'Choose the best successor of node. (Choose a move in the game)'
-        if node.is_terminal():
-            raise RuntimeError(f'choose called on terminal node {node}')
-        if node not in self.tree:
-            return node.find_random_child()
-
-        def score(n):
-            if self.N[n] == 0:
-                return float('-inf')  # avoid unseen moves
-            return self.Q[n] / self.N[n]  # average reward
-
-        return max(self.tree[node], key=score)
-
-    def do_rollout(self, node: Node):
-        'Make the tree one layer better. (Train for one iteration.)'
-        path = self._tree_policy(node)
-        leaf = path[-1]
-        self._expand(leaf)
-        reward = self._default_policy(leaf)
-        self._backup(path, reward)
-
-    def _tree_policy(self, node: Node):
-        'Find an unexplored descendent of `node`'
-        path = []
-        while True:
-            path.append(node)
-            if node not in self.tree or not self.tree[node]:
-                # node is either unexplored or terminal
-                return path
-            unexplored = self.tree[node] - self.tree.keys()
-            if unexplored:
-                n = unexplored.pop()
-                path.append(n)
-                return path
-            node = self._best_child(node)  # descend a layer deeper
-
-    def _expand(self, node: Node):
-        'Update the `tree` dict with the tree of `node`'
-        if node in self.tree:
-            return  # already expanded
-        self.tree[node] = node.find_children()
-
-    def _default_policy(self, node: Node):
-        'Returns the reward for a random simulation (to completion) of `node`'
-        invert_reward = True
-        while True:
-            if node.is_terminal():
-                reward = node.reward()
-                return 1 - reward if invert_reward else reward
-            node = node.find_random_child()
-            invert_reward = not invert_reward
-
-    def _backup(self, path, reward):
-        'Send the reward back up to the ancestors of the leaf.'
-        for node in reversed(path):
-            self.N[node] += 1
-            self.Q[node] += reward
-            reward = 1 - reward  # 1 for me is 0 for my enemy, and vice versa
-
-    def _best_child(self, node: Node):
-        '''Select the best child `node`, balancing exploration & exploitation. 
-        All children should already be expanded.'''
-        assert all(n in self.tree for n in self.tree[node])
-        log_N_vertex = math.log(self.N[node])
-        return max(self.tree[node], key = lambda n: self.Q[n] / self.N[n] + self.C * math.sqrt(log_N_vertex / self.N[n]))
+if __name__ == '__main__':
+    play_game()
