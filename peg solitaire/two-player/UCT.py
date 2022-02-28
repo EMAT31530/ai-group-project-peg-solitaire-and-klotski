@@ -95,8 +95,8 @@ class UCT:
 class Node():
     '''A bitboard representation of a two-player peg solitaire board state.'''
     def __init__(self, bitboard1: int, bitboard2: int, current_player: bool) -> None:
-        self.bitboards = [bitboard1, bitboard2]
-        self.player = current_player
+        self.bitboards = [bitboard2, bitboard1]
+        self.player = current_player # player 1 = True, player 2 = False
 
     def find_random_child(self):
         'Random successor of this board state.'
@@ -104,15 +104,42 @@ class Node():
         while directions:
             shuffle(directions)
             random_direction = directions.pop()
-            adjacent_pegs = int(self.bitboards[self.player] * 2**random_direction) & (self.bitboards[0]|self.bitboards[1])
-            legal_ends = int(adjacent_pegs * 2**random_direction) & ~self.bitboards[self.player] & BOARD_BITMASK 
+            adjacent_pegs = self.bitshift(self.bitboards[self.player], random_direction) & self.__hash__()
+            legal_ends = self.bitshift(adjacent_pegs, random_direction) & ~self.bitboards[self.player] & BOARD_BITMASK 
             if legal_ends:
-                seperate_ends = self.split(legal_ends)
-        return random_child
+                split_ends = self.split(legal_ends)
+                random_end = choice(split_ends)
+                end_to_start = self.smudge(random_end, -random_direction)
+                bitboard1 = self.bitboards[1] & ~end_to_start
+                bitboard2 = self.bitboards[0] & ~end_to_start
+                if self.player == 1:
+                    bitboard1 |= random_end
+                else:
+                    bitboard2 |= random_end
+                return Node(bitboard1, bitboard2, not self.player)
+        return None
+    
+    @staticmethod
+    def smudge(binary: int, direction: int) -> int:
+        '''Dilate twice the on-bits in a direction.'''
+        if direction < 0:
+            direction = -direction
+            return binary | (binary >> direction) | (binary >> 2*direction)
+        else:
+            return binary | (binary << direction) | (binary << 2*direction)
+    
+    @staticmethod
+    def bitshift(binary: int, offset: int) -> int:
+        '''Does right or left bitshift depending on sign of offset.'''
+        if offset < 0:
+            offset = -offset
+            return binary >> offset
+        else:
+            return binary << offset
 
     @staticmethod
     def split(legal_moves: int) -> list[int]:
-        '''Split legal moves into invidual moves by getting the integers' on bits.'''
+        '''Split legal moves into invidual moves by the on-bits.'''
         seperate_moves = []
         n = 0
         while legal_moves:
@@ -138,3 +165,7 @@ class Node():
             return self.bitboards == other.bitboards
         else:
             return NotImplemented
+
+n = Node(0,0,0)
+a = n.smudge(0b10000000,-3)
+print(bin(a))
