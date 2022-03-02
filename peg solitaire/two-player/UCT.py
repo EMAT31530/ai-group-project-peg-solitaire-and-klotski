@@ -146,18 +146,18 @@ class Node():
 
 class UCT:
     'Two-player Monte Carlo tree search using UCT algorithm.'
-    def __init__(self, C=1):
+    def __init__(self, C: int = 1, rollouts: int = 100):
         self.C = C # exploration weight
         self.tree = set()
-        self.time_available = 100
+        self.time_available = rollouts
     
     def search(self, s0: Node = None):
         if s0:
             v0 = s0
         else:
             v0 = Node(player=True)
-        self.tree.add(v0)
         while self.time_available:
+            self.time_available -= 1
             vl = self.tree_policy(v0)
             reward = self.default_policy(vl)
             self.backup(vl, reward)
@@ -165,22 +165,26 @@ class UCT:
     
     def tree_policy(self, v: Node) -> Node:
         while not v.is_terminal():
-            if not v.children:
+            if v not in self.tree:
                 return self.expand(v)
             else:
                 v = self.best_child(v, self.C)
         return v
     
     def expand(self, v: Node) -> Node:
-        'Add unexplored children to the `tree` and return one such child.'
+        'Add unexplored `node` to the `tree`, add `children` nodes to the `node` and return one such child.'
+        self.tree.add(v)
         children = v.find_children()
-        self.tree.union(children)
         return v.children[0]
     
     def best_child(self, v: Node, c: int) -> Node:
-        'Select the best child `node`, balancing exploration & exploitation.'
+        'Select the best child `node`, balancing exploration & exploitation using UCB1.'
         print('selecting best child node')
-        return max(v.children, key = lambda child: child.Q / child.N + c * sqrt(2*log(v.N) / child.N))
+        if v.player == 1:
+            best_child = max(v.children, key = lambda child: child.Q + c * sqrt(2*log(v.N) / child.N))
+        else:
+            best_child = min(v.children, key = lambda child: child.Q - c * sqrt(2*log(v.N) / child.N))
+        return best_child
     
     def default_policy(self, v: Node):
         'Randomly play until a terminal node is reached and return the reward.'
@@ -188,12 +192,11 @@ class UCT:
             v = v.find_random_child()
         return v.reward()
     
-    def backup(self, v: Node, reward: int):
+    def backup(self, v: Node, reward: int) -> None:
         'Propagate the `reward` back up the nodes in the `tree` until the root node is reached.'
         while v:
             v.N += 1
-            v.Q += reward
-            reward *= -1
+            v.Q += (reward - v.Q) / v.N
             v = v.parent
         return
 
