@@ -4,6 +4,7 @@ from math import log, sqrt
 ROWS, COLS = 7, 8
 DIRECTIONS = [-COLS, 1, COLS, -1] # N,E,S,W
 BOARD_BITMASK = 0b00011100000111000111111101111111011111110001110000011100
+RENDER = True
 
 def render(bitboard1: int = 0, bitboard2: int = 0, message: str = '') -> None:
     'Print the bitboards in colour, mainly used for debugging.'
@@ -35,15 +36,15 @@ def render(bitboard1: int = 0, bitboard2: int = 0, message: str = '') -> None:
 class Node():
     'A bitboard representation of a two-player peg solitaire game board state.'
     def __init__(self, player: bool, parent: object = None, bitboard1: int = 0b00001100000001000001001100110110011001000001000000011000, bitboard2: int = 0b10000000110000110110001000001000110110000110000000100, render: bool = False) -> None:
+        self.bitboards = [bitboard2, bitboard1]
         self.player = player # player 1 = True, player 2 = False
         self.parent = parent
         if parent:
             parent.children.add(self)
-        self.bitboards = [bitboard2, bitboard1]
         self.children = set()
         self.Q = 0  # total reward
         self.N = 0 # total visit count
-        if render:
+        if RENDER:
             render(bitboard1, bitboard2, 'node created')
 
     def find_random_child(self):
@@ -58,7 +59,7 @@ class Node():
                 split_ends = self._split(legal_ends)
                 random_end = choice(split_ends)
                 return self._successor(random_end, random_direction)
-        return Node(player=not self.player, parent=self, bitboard1=self.bitboards[1], bitboard2=self.bitboards[0]) # if current player has no moves, turn is skipped
+        return Node(player=not self.player, parent=None, bitboard1=self.bitboards[1], bitboard2=self.bitboards[0]) # if current player has no moves, turn is skipped
 
     def find_children(self) -> set:
         'Find all possible successors of this `node`.'
@@ -82,8 +83,9 @@ class Node():
                     return False
         return True
 
-    def reward(self) -> bool:
-        'Assuming `self` is a terminal node, the player with the fewest pegs on the board wins. A tie gives player 2 the win.'
+    def reward(self):
+        '''Assuming `self` is a terminal node, return a `reward` of 1 if player 1 wins and -1 otherwise. 
+        The player with the fewest pegs on the board wins, a tie gives player 2 the win.'''
         tally1 = self.bitboards[1].bit_count()
         tally2 = self.bitboards[0].bit_count()
         if tally2 <= tally1:
@@ -154,32 +156,45 @@ class UCT:
             v0 = s0
         else:
             v0 = Node(player=True)
+        self.tree.add(v0)
         while self.time_available:
             vl = self.tree_policy(v0)
-            z = self.default_policy(vl)
-            self.backup(vl, z)
+            reward = self.default_policy(vl)
+            self.backup(vl, reward)
         return self.best_child(v0, 0)
     
-    def tree_policy(self, v: Node):
+    def tree_policy(self, v: Node) -> Node:
         while not v.is_terminal():
-            if not v.children: # or not in self.tree or child.N==0 in children?
+            if not v.children:
                 return self.expand(v)
             else:
                 v = self.best_child(v, self.C)
         return v
     
-    def expand(self, v: Node):
-        'Get unvisited child.'
-        v.find_children()
+    def expand(self, v: Node) -> Node:
+        'Add unexplored children to the `tree` and return one such child.'
+        children = v.find_children()
+        self.tree.union(children)
         return v.children[0]
     
-    def best_child(self):
-        return
+    def best_child(self, v: Node, c: int) -> Node:
+        'Select the best child `node`, balancing exploration & exploitation.'
+        print('selecting best child node')
+        return max(v.children, key = lambda child: child.Q / child.N + c * sqrt(2*log(v.N) / child.N))
     
-    def default_policy(self):
-        return
+    def default_policy(self, v: Node):
+        'Randomly play until a terminal node is reached and return the reward.'
+        while not v.is_terminal():
+            v = v.find_random_child()
+        return v.reward()
     
-    def backup(self):
+    def backup(self, v: Node, reward: int):
+        'Propagate the `reward` back up the nodes in the `tree` until the root node is reached.'
+        while v:
+            v.N += 1
+            v.Q += reward
+            reward *= -1
+            v = v.parent
         return
 
 
