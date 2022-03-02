@@ -13,7 +13,7 @@ class Node():
     def __init__(self, bitboard1: int, bitboard2: int, current_player: bool) -> None:
         self.bitboards = [bitboard2, bitboard1]
         self.player = current_player # player 1 = True, player 2 = False
-        render(bitboard1, bitboard2, 'node created')
+        #render(bitboard1, bitboard2, 'node created')
 
     def find_children(self) -> set:
         'All possible successors of this board state.'
@@ -137,7 +137,7 @@ class UCT:
 
     def do_rollout(self, node: Node):
         'Make the tree one layer better. (Train for one iteration.)'
-        print('Doing one iteration of rollout')
+        print('Doing another iteration of rollout')
         path = self._tree_policy(node)
         leaf = path[-1]
         self._expand(leaf)
@@ -146,6 +146,7 @@ class UCT:
 
     def _tree_policy(self, node: Node):
         'Find an unexplored descendent of `node`.'
+        print('finding unexplored child node')
         path = []
         while True:
             path.append(node)
@@ -160,6 +161,7 @@ class UCT:
 
     def _expand(self, node: Node):
         'Update the `tree` dict with the tree of `node`.'
+        print('expanding')
         if node in self.children:
             return  # already expanded
         self.children[node] = node.find_children()
@@ -186,6 +188,7 @@ class UCT:
     def _best_child(self, node: Node):
         '''Select the best child `node`, balancing exploration & exploitation. 
         All children should already be expanded.'''
+        print('selecting best child node')
         assert all(n in self.children for n in self.children[node])
         log_N_vertex = math.log(self.N[node])
         return max(self.children[node], key = lambda n: self.Q[n] / self.N[n] + self.C * math.sqrt(log_N_vertex / self.N[n]))
@@ -224,6 +227,7 @@ def train(rollouts: int, tree: UCT = UCT(), state: Node = Node(DEFAULT_BOARD1, D
         state = tree.choose(state)
         if state.is_terminal():
             break
+    print(tree)
 
 if __name__ == '__main__':
     train(5)
