@@ -85,8 +85,7 @@ class Node():
     def _bitshift(binary: int, offset: int) -> int:
         'Does right or left bitshift depending on sign of `offset`.'
         if offset < 0:
-            offset = -offset
-            return binary >> offset
+            return binary >> -offset
         else:
             return binary << offset
 
@@ -94,12 +93,9 @@ class Node():
     def _split(legal_moves: int) -> list[int]:
         'Split `legal moves` into invidual moves by the on-bits.'
         seperate_moves = []
-        n = 0
         while legal_moves:
-            if legal_moves & 1: # get least sig. bit
-                seperate_moves.append(1 << n)
-            n += 1
-            legal_moves >>= 1 # remove least sig. bit
+            seperate_moves.append(legal_moves & -legal_moves) # get least significant on-bit
+            legal_moves &= legal_moves-1 # remove least significant on-bit
         return seperate_moves
 
     def __hash__(self) -> int:
@@ -142,12 +138,11 @@ class UCT:
         self._backup(path, reward)
 
     def _tree_policy(self, node: Node):
-        'Find an unexplored descendent of `node`'
+        'Find an unexplored descendent of `node`.'
         path = []
         while True:
             path.append(node)
-            if node not in self.children or not self.children[node]:
-                # node is either unexplored or terminal
+            if node not in self.children or not self.children[node]: # node is either unexplored or terminal
                 return path
             unexplored = self.children[node] - self.children.keys()
             if unexplored:
@@ -157,13 +152,13 @@ class UCT:
             node = self._best_child(node)  # descend a layer deeper
 
     def _expand(self, node: Node):
-        'Update the `tree` dict with the tree of `node`'
+        'Update the `tree` dict with the tree of `node`.'
         if node in self.children:
             return  # already expanded
         self.children[node] = node.find_children()
 
     def _default_policy(self, node: Node):
-        'Returns the reward for a random simulation (to completion) of `node`'
+        'Returns the reward for a random simulation (to completion) of `node`.'
         invert_reward = True
         while True:
             if node.is_terminal():
@@ -213,9 +208,13 @@ def render(bitboard1: int = 0, bitboard2: int = 0, message: str = '') -> None:
         print(f'{message}\n')
         return
 
-def play_game():
-    tree = UCT()
-    pass
+def train(rollouts: int, tree: UCT = UCT(), state: Node = Node(DEFAULT_BOARD1, DEFAULT_BOARD2, 1)):
+    'Train for how many `rollouts`.'
+    for _ in range(rollouts):
+        tree.do_rollout(state)
+        state = tree.choose(state)
+        if state.is_terminal():
+            break
 
 if __name__ == '__main__':
-    play_game()
+    train(5)
