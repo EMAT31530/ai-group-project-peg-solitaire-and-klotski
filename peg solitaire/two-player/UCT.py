@@ -13,9 +13,11 @@ class Node():
     def __init__(self, bitboard1: int, bitboard2: int, current_player: bool) -> None:
         self.bitboards = [bitboard2, bitboard1]
         self.player = current_player # player 1 = True, player 2 = False
+        #render(bitboard1, bitboard2, 'node created')
 
     def find_children(self) -> set:
         'All possible successors of this board state.'
+        print('Finding children nodes')
         successors = []
         for direction in DIRECTIONS:
             legal_ends = self._legal_move_ends(self.bitboards[self.player], direction)
@@ -29,6 +31,7 @@ class Node():
 
     def find_random_child(self):
         'Random successor `node` of this board state.'
+        print('Random child')
         directions = DIRECTIONS.copy()
         while directions:
             shuffle(directions)
@@ -43,7 +46,7 @@ class Node():
     def _legal_move_ends(self, bitboard: int, direction: int) -> int:
         '''Get the ending squares of all legal moves from a players' `bitboard` in a `direction`. 
         The on-bits in the returned integer represent where a players' pegs can move to.'''
-        adjacent_pegs = self._bitshift(bitboard, direction) & self.__hash__()
+        adjacent_pegs = self._bitshift(bitboard, direction) & (self.bitboards[0] | self.bitboards[1])
         legal_ends = self._bitshift(adjacent_pegs, direction) & ~bitboard & BOARD_BITMASK
         return legal_ends
 
@@ -73,8 +76,10 @@ class Node():
             end_to_start = move_end | (move_end << direction) | (move_end << 2*direction)
         else:
             end_to_start = move_end | (move_end >> direction) | (move_end >> 2*direction)
+        # remove affected pegs from both bitboards
         bitboard1 = self.bitboards[1] & ~end_to_start
         bitboard2 = self.bitboards[0] & ~end_to_start
+        # add peg to ending square of the move
         if self.player == 1:
             bitboard1 |= move_end
         else:
@@ -85,8 +90,7 @@ class Node():
     def _bitshift(binary: int, offset: int) -> int:
         'Does right or left bitshift depending on sign of `offset`.'
         if offset < 0:
-            offset = -offset
-            return binary >> offset
+            return binary >> -offset
         else:
             return binary << offset
 
@@ -94,16 +98,13 @@ class Node():
     def _split(legal_moves: int) -> list[int]:
         'Split `legal moves` into invidual moves by the on-bits.'
         seperate_moves = []
-        n = 0
         while legal_moves:
-            if legal_moves & 1: # get least sig. bit
-                seperate_moves.append(1 << n)
-            n += 1
-            legal_moves >>= 1 # remove least sig. bit
+            seperate_moves.append(legal_moves & -legal_moves) # get least significant on-bit
+            legal_moves &= legal_moves-1 # remove least significant on-bit
         return seperate_moves
 
     def __hash__(self) -> int:
-        return self.bitboards[0] | self.bitboards[1]
+        return hash((self.bitboards[0], self.bitboards[1], self.player))# alternative self.bitboards[0] | self.bitboards[1]
 
     def __eq__(self, other):
         if isinstance(self, other.__class__):
@@ -121,6 +122,7 @@ class UCT:
 
     def choose(self, node: Node):
         'Choose the best successor of node. (Choose a move in the game)'
+        print('Choosing best successor')
         if node.is_terminal():
             raise RuntimeError(f'choose called on terminal node {node}')
         if node not in self.children:
@@ -135,6 +137,7 @@ class UCT:
 
     def do_rollout(self, node: Node):
         'Make the tree one layer better. (Train for one iteration.)'
+        print('Doing another iteration of rollout')
         path = self._tree_policy(node)
         leaf = path[-1]
         self._expand(leaf)
@@ -142,12 +145,12 @@ class UCT:
         self._backup(path, reward)
 
     def _tree_policy(self, node: Node):
-        'Find an unexplored descendent of `node`'
+        'Find an unexplored descendent of `node`.'
+        print('finding unexplored child node')
         path = []
         while True:
             path.append(node)
-            if node not in self.children or not self.children[node]:
-                # node is either unexplored or terminal
+            if node not in self.children or not self.children[node]: # node is either unexplored or terminal
                 return path
             unexplored = self.children[node] - self.children.keys()
             if unexplored:
@@ -157,13 +160,15 @@ class UCT:
             node = self._best_child(node)  # descend a layer deeper
 
     def _expand(self, node: Node):
-        'Update the `tree` dict with the tree of `node`'
+        'Update the `tree` dict with the tree of `node`.'
+        print('expanding')
         if node in self.children:
             return  # already expanded
         self.children[node] = node.find_children()
 
     def _default_policy(self, node: Node):
-        'Returns the reward for a random simulation (to completion) of `node`'
+        'Returns the reward for a random simulation (to completion) of `node`.'
+        print('Starting random simulation')
         invert_reward = True
         while True:
             if node.is_terminal():
@@ -174,6 +179,7 @@ class UCT:
 
     def _backup(self, path, reward):
         'Send the reward back up to the ancestors of the leaf.'
+        print('backing up')
         for node in reversed(path):
             self.N[node] += 1
             self.Q[node] += reward
@@ -182,40 +188,46 @@ class UCT:
     def _best_child(self, node: Node):
         '''Select the best child `node`, balancing exploration & exploitation. 
         All children should already be expanded.'''
+        print('selecting best child node')
         assert all(n in self.children for n in self.children[node])
         log_N_vertex = math.log(self.N[node])
         return max(self.children[node], key = lambda n: self.Q[n] / self.N[n] + self.C * math.sqrt(log_N_vertex / self.N[n]))
 
 def render(bitboard1: int = 0, bitboard2: int = 0, message: str = '') -> None:
-        'Print the bitboards in colour.'
-        for row in range(ROWS):
-            output_row = ''
-            for n in range(COLS*row,COLS*row+COLS):
-                nth_bit = 1 << n
-                if BOARD_BITMASK & nth_bit: # if on the board
-                    peg = (bitboard1 & nth_bit and 1) + 2*(bitboard2 & nth_bit and 1)
-                    if peg == 0: # empty peg
-                        output_row += '\033[39m o' # white circle
-                    elif peg == 1: # player 1 peg
-                        output_row += '\033[34m o' # blue circle
-                    elif peg == 2: # player 2 peg
-                        output_row += '\033[31m o' # red circle
-                    else:
-                        raise ValueError('State not valid') 
-                else: # not on the board
-                    if bitboard1 & nth_bit:
-                        output_row += '\033[32m -' # green
-                    elif bitboard2 & nth_bit:
-                        output_row += '\033[35m -' # magenta
-                    else: # no bugs
-                        output_row += '\033[39m -' # white
-            print(output_row)
-        print(f'{message}\n')
-        return
+    'Print the bitboards in colour.'
+    for row in range(ROWS):
+        output_row = ''
+        for n in range(COLS*row,COLS*row+COLS):
+            nth_bit = 1 << n
+            if BOARD_BITMASK & nth_bit: # if on the board
+                peg = (bitboard1 & nth_bit and 1) + 2*(bitboard2 & nth_bit and 1)
+                if peg == 0: # empty peg
+                    output_row += '\033[39m o' # white circle
+                elif peg == 1: # player 1 peg
+                    output_row += '\033[34m o' # blue circle
+                elif peg == 2: # player 2 peg
+                    output_row += '\033[31m o' # red circle
+                else:
+                    raise ValueError('State not valid') 
+            else: # not on the board
+                if bitboard1 & nth_bit:
+                    output_row += '\033[32m -' # green
+                elif bitboard2 & nth_bit:
+                    output_row += '\033[35m -' # magenta
+                else: # no bugs
+                    output_row += '\033[39m -' # white
+        print(output_row)
+    print(f'{message}\n')
+    return
 
-def play_game():
-    tree = UCT()
-    pass
+def train(rollouts: int, tree: UCT = UCT(), state: Node = Node(DEFAULT_BOARD1, DEFAULT_BOARD2, 1)):
+    'Train for how many `rollouts`.'
+    for _ in range(rollouts):
+        tree.do_rollout(state)
+        state = tree.choose(state)
+        if state.is_terminal():
+            break
+    print(tree)
 
 if __name__ == '__main__':
-    play_game()
+    train(5)
