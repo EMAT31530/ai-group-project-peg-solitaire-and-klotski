@@ -231,3 +231,4 @@ def train(rollouts: int, tree: UCT = UCT(), state: Node = Node(DEFAULT_BOARD1, D
 
 if __name__ == '__main__':
     train(5)
+    pass
