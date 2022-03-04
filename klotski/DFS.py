@@ -125,9 +125,9 @@ def Possibilities(move):
 
 
 # Return a list, each elements in steps represents each step
-def DFS(move):
+def DFS(board):
     # Storage in 1d array
-    Moves = [move]
+    Moves = [board]
 
 
     itemposition = [-1]
