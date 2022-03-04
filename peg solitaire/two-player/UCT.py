@@ -4,7 +4,7 @@ from math import log, sqrt
 ROWS, COLS = 7, 8
 DIRECTIONS = [-COLS, 1, COLS, -1] # N,E,S,W
 BOARD_BITMASK = 0b00011100000111000111111101111111011111110001110000011100
-RENDER = True
+RENDER = False
 
 def render(bitboard1: int = 0, bitboard2: int = 0, message: str = '') -> None:
     'Print the bitboards in colour, mainly used for debugging.'
@@ -35,13 +35,13 @@ def render(bitboard1: int = 0, bitboard2: int = 0, message: str = '') -> None:
 
 class Node():
     'A bitboard representation of a two-player peg solitaire game board state.'
-    def __init__(self, player: bool, parent: object = None, bitboard1: int = 0b00001100000001000001001100110110011001000001000000011000, bitboard2: int = 0b10000000110000110110001000001000110110000110000000100, render: bool = False) -> None:
+    def __init__(self, player: bool = True, parent: object = None, bitboard1: int = 0b00001100000001000001001100110110011001000001000000011000, bitboard2: int = 0b10000000110000110110001000001000110110000110000000100) -> None:
         self.bitboards = [bitboard2, bitboard1]
         self.player = player # player 1 = True, player 2 = False
         self.parent = parent
         if parent:
-            parent.children.add(self)
-        self.children = set()
+            parent.children.append(self)
+        self.children = []
         self.Q = 0  # total reward
         self.N = 0 # total visit count
         if RENDER:
@@ -49,7 +49,6 @@ class Node():
 
     def find_random_child(self):
         'Return successor `node` in randomised direction and board square.'
-        print('Random child')
         directions = DIRECTIONS.copy()
         while directions:
             shuffle(directions)
@@ -58,18 +57,17 @@ class Node():
             if legal_ends:
                 split_ends = self._split(legal_ends)
                 random_end = choice(split_ends)
-                return self._successor(random_end, random_direction)
+                return self._successor(random_end, random_direction, None)
         return Node(player=not self.player, parent=None, bitboard1=self.bitboards[1], bitboard2=self.bitboards[0]) # if current player has no moves, turn is skipped
 
-    def find_children(self) -> set:
+    def find_children(self) -> list:
         'Find all possible successors of this `node`.'
-        print('Finding children nodes')
         for direction in DIRECTIONS:
             legal_ends = self._legal_move_ends(self.bitboards[self.player], direction)
             if legal_ends:
                 split_ends = self._split(legal_ends)
                 for end in split_ends:
-                    self._successor(end, direction)
+                    self._successor(end, direction, self)
         if not self.children: 
             Node(player=not self.player, parent=self, bitboard1=self.bitboards[1], bitboard2=self.bitboards[0])
         return self.children
@@ -93,12 +91,11 @@ class Node():
         else:
             return 1 # player 1 wins
 
-    def _successor(self, move_end: int, direction: int): 
+    def _successor(self, move_end: int, direction: int, parent: object): 
         'Return a successor `node` given the ending square of the move and the `direction` it was moved.'
         # dilate twice the on-bits of a bitboard in a direction
         if direction < 0:
-            direction = -direction
-            end_to_start = move_end | (move_end << direction) | (move_end << 2*direction)
+            end_to_start = move_end | (move_end << -direction) | (move_end << -2*direction)
         else:
             end_to_start = move_end | (move_end >> direction) | (move_end >> 2*direction)
         # remove affected pegs from both bitboards
@@ -109,7 +106,7 @@ class Node():
             bits1 |= move_end
         else:
             bits2 |= move_end
-        return Node(player=not self.player, parent=self, bitboard1=bits1, bitboard2=bits2)
+        return Node(player=not self.player, parent=parent, bitboard1=bits1, bitboard2=bits2)
     
     def _legal_move_ends(self, bitboard: int, direction: int) -> int:
         '''Get the ending squares of all legal moves from a players' `bitboard` in a `direction`. 
@@ -135,29 +132,14 @@ class Node():
             legal_moves &= legal_moves-1 # remove least significant on-bit
         return seperate_moves
 
-    def __hash__(self) -> int:
-        return hash((self.bitboards[0], self.bitboards[1], self.player)) # alternative self.bitboards[0] | self.bitboards[1]
-
-    def __eq__(self, other):
-        if isinstance(self, Node):
-            return self.bitboards == other.bitboards and self.player == other.player
-        else:
-            return NotImplemented
-
 class UCT:
     'Two-player Monte Carlo tree search using UCT algorithm.'
-    def __init__(self, C: int = 1, rollouts: int = 100):
+    def __init__(self, C: float = 1):
         self.C = C # exploration weight
-        self.tree = set()
-        self.time_available = rollouts
     
-    def search(self, s0: Node = None):
-        if s0:
-            v0 = s0
-        else:
-            v0 = Node(player=True)
-        while self.time_available:
-            self.time_available -= 1
+    def search(self, v0: Node, time: int = 50):
+        while time:
+            time -= 1
             vl = self.tree_policy(v0)
             reward = self.default_policy(vl)
             self.backup(vl, reward)
@@ -165,7 +147,7 @@ class UCT:
     
     def tree_policy(self, v: Node) -> Node:
         while not v.is_terminal():
-            if v not in self.tree:
+            if not v.children:
                 return self.expand(v)
             else:
                 v = self.best_child(v, self.C)
@@ -173,19 +155,17 @@ class UCT:
     
     def expand(self, v: Node) -> Node:
         'Add unexplored `node` to the `tree`, add `children` nodes to the `node` and return one such child.'
-        self.tree.add(v)
         children = v.find_children()
-        return v.children[0]
+        return children[0]
     
-    def best_child(self, v: Node, c: int) -> Node:
+    def best_child(self, v: Node, c: float) -> Node:
         'Select the best child `node`, balancing exploration & exploitation using UCB1.'
-        print('selecting best child node')
         if v.player == 1:
-            best_child = max(v.children, key = lambda child: child.Q + c * sqrt(2*log(v.N) / child.N))
+            best_child = max(v.children, key = lambda child: child.Q / child.N + c * sqrt(2*log(v.N) / child.N) if child.N != 0 else float('inf'))
         else:
-            best_child = min(v.children, key = lambda child: child.Q - c * sqrt(2*log(v.N) / child.N))
+            best_child = min(v.children, key = lambda child: child.Q / child.N - c * sqrt(2*log(v.N) / child.N) if child.N != 0 else float('-inf'))
         return best_child
-    
+
     def default_policy(self, v: Node):
         'Randomly play until a terminal node is reached and return the reward.'
         while not v.is_terminal():
@@ -193,15 +173,17 @@ class UCT:
         return v.reward()
     
     def backup(self, v: Node, reward: int) -> None:
-        'Propagate the `reward` back up the nodes in the `tree` until the root node is reached.'
+        'Propagate the `reward` back up the nodes in the `tree` starting from the leaf node until the root node is reached.'
         while v:
             v.N += 1
-            v.Q += (reward - v.Q) / v.N
+            v.Q += reward
             v = v.parent
         return
 
 
 if __name__ == '__main__':
-    u = UCT()
-    u.search()
+    uct = UCT()
+    s0 = Node()
+    s1 = uct.search(v0=s0, time=200)
+    s2 = uct.search(v0=s1, time=200)
     pass
