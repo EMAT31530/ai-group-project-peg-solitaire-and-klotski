@@ -111,7 +111,7 @@ class Solitaire2:
         self.BITMASK = shape # used to delete pieces that move off the board
         self.DIRECTIONS = [-cols, 1, cols, -1] # N,E,S,W
         self.state = state
-
+        
     def render(self, message: str = '') -> None:
         'Print the bitboards in colour, mainly used for debugging.'
         for row in range(self.ROWS):
