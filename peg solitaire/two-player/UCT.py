@@ -3,6 +3,7 @@
 from math import log, sqrt
 from random import choice
 import game_logic as g
+from time import perf_counter
     
 def uct_search(root: g.Node, iterations: int = 50) -> g.Node: 
     '''Build a game tree starting from the `root` node using UCT and return the best performing successor.
@@ -13,7 +14,7 @@ def uct_search(root: g.Node, iterations: int = 50) -> g.Node:
         leaf = tree_policy(root)
         reward = default_policy(leaf)
         backup(leaf, reward)
-    return select(root, 0)
+    return max(root.children, key = lambda child: child.N) # select(root, 0)
 
 def tree_policy(node: g.Node) -> g.Node:
     'Traverse down the game tree from the root node until a leaf node is found.'
@@ -52,9 +53,22 @@ def backup(node: g.Node, reward: int) -> None:
     return
 
 if __name__ == '__main__':
+    t1 = perf_counter()
     C = 1 # exploration weight
-    g.game = g.Solitaire2(5,5,23583,g.Node(True,[7492,130]))
-    g.game.render()
-    g.game.state = uct_search(g.game.state, 2)
-    g.game.render()
-    pass
+    agent = True # uct = True, random = false
+    rewards = []
+    #g.game.render()
+    for i in range(100):
+        g.game = g.DefaultBoard()
+        while not g.game.state.is_terminal():
+            if agent:
+                g.game.state = uct_search(g.game.state, 200)
+            else:
+                g.game.state = g.game.state.find_random_child()
+            agent = not agent
+            #g.game.render()
+        rewards.append(g.game.state.reward())
+
+    t2 = perf_counter()
+    win_rate = rewards.count(1)/len(rewards)
+    print(f'Player 1 win percentage: {win_rate}\nTime: {t2-t1} seconds')
