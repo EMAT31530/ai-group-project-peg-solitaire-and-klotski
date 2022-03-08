@@ -125,9 +125,9 @@ def Possibilities(move):
 
 
 # Return a list, each elements in steps represents each step
-def DFS(move):
+def DFS(board):
     # Storage in 1d array
-    Moves = [move]
+    Moves = [board]
 
 
     itemposition = [-1]
@@ -177,5 +177,6 @@ def DFS(move):
 starttime = time.time()
 result = DFS(board_1)
 endtime = time.time()
+print(result)
 print('Time cost for this solution: ', endtime - starttime)
 print('Number of steps: ', len(result))

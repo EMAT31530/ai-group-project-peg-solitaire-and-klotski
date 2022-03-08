@@ -3,7 +3,7 @@
 
 import time
 import numpy as np
-
+import copy
 
 
 King = 0
@@ -124,67 +124,18 @@ def Possibilities(move):
                 result.extend(possibles)
     return result
 
-def eff_key(self):
-    grid = self.grid
-    return " ".join([str(eff_block[grid[i][j]]) for i in range(5) for j in range(4)])
 
-def BFS(source: State, dest: State):
-    # Storage in 1d array
-    Moves = [move]
+def BFS(board):
+
+    boardarray = []
+    Moves = []
 
 
-    itemposition = [-1]
-    indexposition = [0]
 
-    # start DFS
-    EndDFS = -1
-    steps = 0
 
-    while True:
-
-        # For loop to check any possibility
-
-        for j in range(indexposition[-1], len(Moves)):
-            if Moves[j][3][1] == King:
-                EndDFS = j
-                break #Break if reaches end
-
-        if EndDFS != -1:
-            break
-
-    vis = set()
-    par = {b: None}
-    q = [b]
-    vis.add(b.eff_key())
-    sol_found = False
-    cur_board = None
-    while len(q) > 0:
-        cur_board = q[0]
-        q = q[1:]
-        next_boards = cur_board.all_boards(vis)
-        for board in next_boards:
-            if board.eff_key() not in vis:
-                q.append(board)
-                vis.add(board.eff_key())
-                par[board] = cur_board
-                if board.solved():
-                    cur_board = board
-                    sol_found = True
-                    break
-        if sol_found:
-            break
-
-    solution = []
-    if sol_found:
-        while cur_board != None:
-            solution.append(cur_board)
-            cur_board = par[cur_board]
-        solution.reverse()
-        for sol in solution:
-            sol.print_grid()
 
 starttime = time.time()
-result = DFS(board_1)
+result = BFS(board_1)
 endtime = time.time()
 print('Time cost for this solution: ', endtime - starttime)
 print('Number of steps: ', len(result))
