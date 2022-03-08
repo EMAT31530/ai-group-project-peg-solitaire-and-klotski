@@ -6,9 +6,9 @@ def main() -> list[int]:
     game_lengths = []
     for _ in range(SIMULATIONS):
         game_length = 0
-        g.game = g.LargeWeave()
+        g.game = g.LargeLattice()
         while not g.game.state.is_terminal():
-            # g.game.render()
+            #g.game.render()
             game_length += 1
             g.game.state = g.game.state.find_random_child()
         rewards.append( g.game.state.reward())

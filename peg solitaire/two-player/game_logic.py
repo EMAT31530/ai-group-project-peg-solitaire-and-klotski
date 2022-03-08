@@ -154,6 +154,11 @@ class Spiral(Solitaire2):
     def __init__(self) -> None:
         super().__init__(7,8,7912633273359388,Node(player=True, bitboards=[3382180283944984,4530452855196676]))
 
+class Lattice(Solitaire2):
+    '7x7 board with lattice pattern.'
+    def __init__(self) -> None:
+        super().__init__(7,8,7912633273359388,Node(player=True, bitboards=[5638661275453460,2273971863688200]))
+
 class LargeSymmetrical(Solitaire2):
     '11x11 board with symmetrical pattern.'
     def __init__(self) -> None:
@@ -169,11 +174,12 @@ class LargeStripes(Solitaire2):
     def __init__(self) -> None:
         super().__init__(11,12,329729043244155137334757505615730278648,Node(player=True, bitboards=[80480640902030595397529874646138880,329648562603253106702466487593665036536]))
 
+class LargeLattice(Solitaire2):
+    '11x11 board with lattice pattern.'
+    def __init__(self) -> None:
+        super().__init__(11,12,329729043244155137334757505615730278648,Node(player=True, bitboards=[106392765131259131987218331343197470800,223336278112896005310645686125113704616]))
+
 game = None
 if __name__ == '__main__':
-    Symmetrical().render()
-    Weave().render()
-    Spiral().render()
-    LargeSymmetrical().render()
-    LargeWeave().render()
-    LargeStripes().render()
+    game = Lattice().render()
+    game = LargeLattice().render()
