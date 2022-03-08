@@ -1,24 +1,18 @@
-import random
 from statistics import mean
-import game as g
+import game_logic as g
 from time import perf_counter
-# from time import sleep
 
 def main() -> list[int]:
     rewards = []
     game_lengths = []
     for _ in range(50000):
         game_length = 0
-        game = g.Solitaire2(display=False)
-        while not game.done:
+        g.game = g.DefaultBoard()
+        while not g.game.state.is_terminal():
+            # g.game.render()
             game_length += 1
-            if game.player_legal_moves:
-                rand_dir = random.choice(list(game.player_legal_moves))
-                seperate_moves = game.on_bits(game.player_legal_moves[rand_dir])
-                game.step(random.choice(seperate_moves),rand_dir)
-            else:
-                game.step()
-        rewards.append(game.done)
+            g.game.state = g.game.state.find_random_child()
+        rewards.append( g.game.state.reward())
         game_lengths.append(game_length)
     return rewards, game_lengths
 
