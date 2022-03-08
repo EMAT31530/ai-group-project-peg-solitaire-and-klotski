@@ -177,5 +177,6 @@ def DFS(board):
 starttime = time.time()
 result = DFS(board_1)
 endtime = time.time()
+print(result)
 print('Time cost for this solution: ', endtime - starttime)
 print('Number of steps: ', len(result))
