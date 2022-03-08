@@ -1,13 +1,12 @@
-from statistics import mean
 import game_logic as g
 from time import perf_counter
 
 def main() -> list[int]:
     rewards = []
     game_lengths = []
-    for _ in range(50000):
+    for _ in range(SIMULATIONS):
         game_length = 0
-        g.game = g.DefaultBoard()
+        g.game = g.LargeWeave()
         while not g.game.state.is_terminal():
             # g.game.render()
             game_length += 1
@@ -17,9 +16,10 @@ def main() -> list[int]:
     return rewards, game_lengths
 
 if __name__ == "__main__":
+    SIMULATIONS = 50000
     t1 = perf_counter()
     outcomes, lengths = main()
     t2 = perf_counter()
-    win_rate = outcomes.count(1)/len(outcomes)
-    avg_length = mean(lengths)
-    print(f'Player 1 win percentage: {win_rate}\nTime: {t2-t1}, Mean game length: {avg_length}')
+    win_rate = outcomes.count(1)/SIMULATIONS
+    avg_length = sum(lengths)/SIMULATIONS
+    print(f'Player 1 win percentage: {win_rate}, Simulation time: {t2-t1}, Mean game length: {avg_length}')
