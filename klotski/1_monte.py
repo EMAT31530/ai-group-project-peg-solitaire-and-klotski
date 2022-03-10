@@ -1,5 +1,6 @@
 import random
 import time
+import queue
 
 dirr = [1, 0, -1, 0]
 dirc = [0, 1, 0, -1]
@@ -113,7 +114,6 @@ class Board:
         for i in range(len(self.chess)):
             for dir in range(4):
                 c = self.copy() #copy the last move if it stays
-
                 if c.move(c.chess[i], dir):
                     lst.append([i, dir])
         return lst
@@ -133,7 +133,7 @@ def simulate(): #Monte Carlo
         if b.is_win(): #end counting if win
             return print_steps(d, str(b))
         ok = False
-        for i in range(150):  #defult policy
+        for i in range(5):  #defult policy
             c = b.copy()
             all_moves = c.all_moves()
             index, dir = random.choice(all_moves) #Random choice move
@@ -152,9 +152,20 @@ def stop(): #stop when one result is found
         if ret is not False:
             return ret
 
+def more_runs():
+    value, min_steps = '', 999999999 #Value to unpack
+    runs = 15 #set interation number
+    for i in range(runs):
+        print('interation number %d' % (i + 1))
+        res, steps = stop()
+        if min_steps > steps: #Take the shortest solution
+            min_steps = steps
+            value = res
+        print('steps for this interation is %d，shortest path for now is %d' % (steps, min_steps))
+    print(value)
+
 #Run the program, count time
 start = time.time()
-res = stop()
-print(res[0])
+more_runs()
 end = time.time()
 print('Running time: ', end - start)
