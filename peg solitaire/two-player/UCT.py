@@ -3,13 +3,14 @@
 from math import log, sqrt
 from random import choice
 import game_logic as g
-from time import perf_counter
+from time import perf_counter, sleep
 import resource
 
 def uct_search(root: g.Node, iterations: int = 50) -> g.Node: 
     '''Build a game tree starting from the `root` node using UCT and return the best performing successor.
     `Iterations` corresponds to how many random playouts will be performed.'''
     root.parent = None # prevents backup of nodes that came before the new root node
+    root.children = [] # so that information isn't shared between turns
     while iterations:
         iterations -= 1
         leaf = tree_policy(root)
@@ -39,6 +40,22 @@ def select(node: g.Node, c: float) -> g.Node:
         best_child = min(node.children, key = lambda child: child.Q / child.N - c * sqrt(2 * log(node.N) / child.N) if child.N != 0 else float('-inf'))
     return best_child
 
+def select2(node: g.Node, c: float) -> g.Node:
+    'Alternative to `select` function in which ties between the best children are broken randomly.'
+    v = []
+    for child in node.children:
+        if node.player == 1:
+            child.v = child.Q / child.N + c * sqrt(2 * log(node.N) / child.N) if child.N != 0 else float('inf')
+        else:
+            child.v = child.Q / child.N - c * sqrt(2 * log(node.N) / child.N) if child.N != 0 else float('-inf')
+        v.append(child.v)
+    if node.player == 1:
+        best_children = [child for child in node.children if child.v == max(v)]
+    else:
+        best_children = [child for child in node.children if child.v == min(v)]
+    random_best = choice(best_children)
+    return random_best
+
 def default_policy(node: g.Node) -> int:
     'Randomly play from the leaf `node` until a terminal node is reached and return the reward.'
     while not node.is_terminal():
@@ -65,15 +82,16 @@ def main(AGENT: bool, EPISODES: int, ITERATIONS: int):
                 g.game.state = g.game.state.find_random_child()
             #AGENT = not AGENT
             #g.game.render()
+            #sleep(0.1)
         rewards.append(g.game.state.reward())
     t2 = perf_counter()
     win_rate = rewards.count(1)/len(rewards)
-    print(f'Player 1 win percentage: {win_rate}, Time (seconds) per game: {(t2-t1)/EPISODES}\nExploration weight: {C}, episodes: {500}, iterations: {ITERATIONS}, pattern: {g.game.__class__}')
+    print(f'Player 1 win percentage: {win_rate}, Time (seconds) per game: {(t2-t1)/EPISODES}\nExploration weight: {C}, episodes: {EPISODES}, iterations: {ITERATIONS}, pattern: {g.game.__class__}')
     return
 
 if __name__ == '__main__':
     C = 1 # exploration weight
-    main(True, 500, 800)
+    main(True, 10000, 5)
     r = resource.getrusage(resource.RUSAGE_SELF)
     print(f'Memory usage (MB): {r.ru_maxrss / 1000000}')
     
