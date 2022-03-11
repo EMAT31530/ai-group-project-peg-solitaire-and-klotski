@@ -6,9 +6,9 @@ def main() -> list[int]:
     game_lengths = []
     for _ in range(SIMULATIONS):
         game_length = 0
-        g.game = g.LargeLattice()
+        g.game = g.Symmetrical()
         while not g.game.state.is_terminal():
-            #g.game.render()
+            g.game.render()
             game_length += 1
             g.game.state = g.game.state.find_random_child()
         rewards.append( g.game.state.reward())
@@ -16,7 +16,7 @@ def main() -> list[int]:
     return rewards, game_lengths
 
 if __name__ == "__main__":
-    SIMULATIONS = 50000
+    SIMULATIONS = 1
     t1 = perf_counter()
     outcomes, lengths = main()
     t2 = perf_counter()

@@ -4,7 +4,8 @@ from math import log, sqrt
 from random import choice
 import game_logic as g
 from time import perf_counter
-    
+import resource
+
 def uct_search(root: g.Node, iterations: int = 50) -> g.Node: 
     '''Build a game tree starting from the `root` node using UCT and return the best performing successor.
     `Iterations` corresponds to how many random playouts will be performed.'''
@@ -52,24 +53,27 @@ def backup(node: g.Node, reward: int) -> None:
         node = node.parent
     return
 
-if __name__ == '__main__':
-    C = 1 # exploration weight
-    agent = True # uct = True, random = false
+def main(AGENT: bool, EPISODES: int, ITERATIONS: int):
     rewards = []
-    #g.game.render()
-    episodes = 100
     t1 = perf_counter()
-    for _ in range(episodes):
-        g.game = g.Spiral()
+    for _ in range(EPISODES):
+        g.game = g.LargeLattice()
         while not g.game.state.is_terminal():
-            if agent:
-                g.game.state = uct_search(g.game.state, 100)
+            if AGENT:
+                g.game.state = uct_search(g.game.state, ITERATIONS)
             else:
                 g.game.state = g.game.state.find_random_child()
-            agent = not agent
+            #AGENT = not AGENT
             #g.game.render()
         rewards.append(g.game.state.reward())
-
     t2 = perf_counter()
     win_rate = rewards.count(1)/len(rewards)
-    print(f'Player 1 win percentage: {win_rate}\nTime: {(t2-t1)/episodes} seconds per game')
+    print(f'Player 1 win percentage: {win_rate}, Time (seconds) per game: {(t2-t1)/EPISODES}\nExploration weight: {C}, episodes: {500}, iterations: {ITERATIONS}, pattern: {g.game.__class__}')
+    return
+
+if __name__ == '__main__':
+    C = 1 # exploration weight
+    main(True, 500, 800)
+    r = resource.getrusage(resource.RUSAGE_SELF)
+    print(f'Memory usage (MB): {r.ru_maxrss / 1000000}')
+    
