@@ -14,20 +14,17 @@ Project to apply search algorithms for peg solitaire and klotski puzzles.
 ## Peg Solitaire
 - [x] Breadth first 
 - [x] DFS
-- [ ] Iterative deepening
 - [x] Uniform cost
 - [x] A* graph (not tree)
-- [ ] Bidirectional 
 
 Two-player
-- [ ] Monte Carlo tree
+- [x] Monte Carlo tree
 - [ ] Minimax with Alpha-Beta Pruning
 
 ## Klotski Seach Algorithms 
-- [x] Breadth first 
+- [x] Breadth first
+- [x] DFS
 - [ ] Iterative deepening
 - [ ] Uniform cost
 - [ ] A* graph (not tree)
-- [ ] Bidirectional 
-- [ ] Monte Carlo tree
-- [ ] Minimax with Alpha-Beta Pruning (for two-player)
+- [x] Monte Carlo tree
