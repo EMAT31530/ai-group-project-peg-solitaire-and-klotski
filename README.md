@@ -15,8 +15,8 @@ Project to apply search algorithms for peg solitaire and klotski puzzles.
 - [x] Breadth first 
 - [x] DFS
 - [ ] Iterative deepening
-- [ ] Uniform cost
-- [ ] A* graph (not tree)
+- [x] Uniform cost
+- [x] A* graph (not tree)
 - [ ] Bidirectional 
 
 Two-player
