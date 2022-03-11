@@ -53,16 +53,17 @@ def backup(node: g.Node, reward: int) -> None:
     return
 
 if __name__ == '__main__':
-    t1 = perf_counter()
     C = 1 # exploration weight
     agent = True # uct = True, random = false
     rewards = []
     #g.game.render()
-    for i in range(100):
-        g.game = g.DefaultBoard()
+    episodes = 100
+    t1 = perf_counter()
+    for _ in range(episodes):
+        g.game = g.Spiral()
         while not g.game.state.is_terminal():
             if agent:
-                g.game.state = uct_search(g.game.state, 200)
+                g.game.state = uct_search(g.game.state, 100)
             else:
                 g.game.state = g.game.state.find_random_child()
             agent = not agent
@@ -71,4 +72,4 @@ if __name__ == '__main__':
 
     t2 = perf_counter()
     win_rate = rewards.count(1)/len(rewards)
-    print(f'Player 1 win percentage: {win_rate}\nTime: {t2-t1} seconds')
+    print(f'Player 1 win percentage: {win_rate}\nTime: {(t2-t1)/episodes} seconds per game')

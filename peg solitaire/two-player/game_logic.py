@@ -139,11 +139,47 @@ class Solitaire2:
         print(f'{message}\n')
         return
 
-class DefaultBoard(Solitaire2):
-    'Defaul version of the two-player peg solitaire game board'
+class Symmetrical(Solitaire2):
+    'Default version of the two-player peg solitaire game board. 7x7 board with symmetrical pattern.'
     def __init__(self) -> None:
-        super().__init__(7,8,0b00011100000111000111111101111111011111110001110000011100,Node(player=True, bitboards=[0b00001100000001000001001100110110011001000001000000011000,0b10000000110000110110001000001000110110000110000000100]))
+        super().__init__(7,8,7912633273359388,Node(player=True, bitboards=[13004381212,7912620134760448]))
 
-game = DefaultBoard()
+class Weave(Solitaire2):
+    '7x7 board with weave pattern.'
+    def __init__(self) -> None:
+        super().__init__(7,8,7912633273359388,Node(player=True, bitboards=[1147964584367120,6755871891324940]))
+
+class Spiral(Solitaire2):
+    '7x7 board with spiral pattern.'
+    def __init__(self) -> None:
+        super().__init__(7,8,7912633273359388,Node(player=True, bitboards=[3382180283944984,4530452855196676]))
+
+class Lattice(Solitaire2):
+    '7x7 board with lattice pattern.'
+    def __init__(self) -> None:
+        super().__init__(7,8,7912633273359388,Node(player=True, bitboards=[5638661275453460,2273971863688200]))
+
+class LargeSymmetrical(Solitaire2):
+    '11x11 board with symmetrical pattern.'
+    def __init__(self) -> None:
+        super().__init__(11,12,329729043244155137334757505615730278648,Node(player=True, bitboards=[135470563070413004728140024,329729043244019666734793604463583035392]))
+
+class LargeWeave(Solitaire2):
+    '11x11 board with weave pattern.'
+    def __init__(self) -> None:
+        super().__init__(11,12,329729043244155137334757505615730278648,Node(player=True, bitboards=[85096554508585988530613290924595544080,244577969605362733784117297916730671336]))
+
+class LargeStripes(Solitaire2):
+    '11x11 board with stripe pattern.'
+    def __init__(self) -> None:
+        super().__init__(11,12,329729043244155137334757505615730278648,Node(player=True, bitboards=[80480640902030595397529874646138880,329648562603253106702466487593665036536]))
+
+class LargeLattice(Solitaire2):
+    '11x11 board with lattice pattern.'
+    def __init__(self) -> None:
+        super().__init__(11,12,329729043244155137334757505615730278648,Node(player=True, bitboards=[106392765131259131987218331343197470800,223336278112896005310645686125113704616]))
+
+game = None
 if __name__ == '__main__':
-    game.render()
+    game = Lattice().render()
+    game = LargeLattice().render()
