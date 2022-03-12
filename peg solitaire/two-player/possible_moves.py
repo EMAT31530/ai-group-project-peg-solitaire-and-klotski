@@ -3,6 +3,7 @@ import game_logic as g
 
 def main() -> list[int]:
     avg_moves = []
+    visits = []
     for e in range(SIMULATIONS):
         ith_move = -1
         g.game = g.Symmetrical()
@@ -13,10 +14,12 @@ def main() -> list[int]:
             g.game.state = choice(children)
             ith_move += 1
             try:
-                x = avg_moves[ith_move] * e
-                x2 = (x + possible_moves) / (e+1)
+                x = avg_moves[ith_move] * visits[ith_move]
+                visits[ith_move] += 1
+                x2 = (x + possible_moves) / visits[ith_move]
                 avg_moves[ith_move]=x2
             except IndexError:
+                visits.append(1)
                 avg_moves.append(possible_moves)
     return avg_moves
 

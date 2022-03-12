@@ -10,7 +10,7 @@ def uct_search(root: g.Node, iterations: int = 50) -> g.Node:
     '''Build a game tree starting from the `root` node using UCT and return the best performing successor.
     `Iterations` corresponds to how many random playouts will be performed.'''
     root.parent = None # prevents backup of nodes that came before the new root node
-    root.children = [] # so that information isn't shared between turns
+    #root.children = [] # so that information isn't shared between turns
     while iterations:
         iterations -= 1
         leaf = tree_policy(root)
@@ -74,7 +74,7 @@ def main(AGENT: bool, EPISODES: int, ITERATIONS: int):
     rewards = []
     t1 = perf_counter()
     for _ in range(EPISODES):
-        g.game = g.LargeLattice()
+        g.game = g.LargeSymmetrical()
         while not g.game.state.is_terminal():
             if AGENT:
                 g.game.state = uct_search(g.game.state, ITERATIONS)
@@ -91,7 +91,7 @@ def main(AGENT: bool, EPISODES: int, ITERATIONS: int):
 
 if __name__ == '__main__':
     C = 1 # exploration weight
-    main(True, 10000, 5)
+    main(True, 500, 800)
     r = resource.getrusage(resource.RUSAGE_SELF)
     print(f'Memory usage (MB): {r.ru_maxrss / 1000000}')
     
