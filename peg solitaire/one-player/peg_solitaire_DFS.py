@@ -12,6 +12,14 @@ board = np.array([
 	[-1,-1, 1, 1, 1,-1,-1]
 	])
 
+# board = np.array([
+# 	[1, 1, 1, 1, 1],
+# 	[1, 1, 1, 1, 1],
+# 	[1, 1, 1, 1, 1],
+# 	[1, 1, 0, 1, 1],
+# 	[1, 1, 1, 1, 1],
+# 	])
+
 def find_solution(board):
 	print("\nStart board:")
 	print(board)
@@ -24,7 +32,7 @@ def find_solution(board):
 		possible_moves = []
 
 		# Below are the direction vectors of all possible move directions in a given position.
-		for direction in [(0, 2), (0, -2), (-2, 0), (2, 0)]:
+		for direction in [(0, 2), (0, -2), (2, 0), (-2, 0)]:
 			x_new = x_old + direction[0]
 			y_new = y_old + direction[1]
 			# Here we make sure that the generated coordinates within the bounds of the board.
@@ -65,7 +73,7 @@ def find_solution(board):
 			for element in row:
 				if element == 1:
 					count += 1
-		if (count == 1) and board[3, 3] == 1:
+		if (count == 1) and (board[3, 3] == 1):
 			print("\nFinal board:")
 			print(board)
 			return True
@@ -77,23 +85,28 @@ def find_solution(board):
 		return hash(tuple(map(tuple, board)))
 
 	visited = {board_code(board)}
-	stats = {"End states found:": 0, "Nodes visited:": 0, "Copies bypassed:": 0}
+	stats = {"End states:": 0, "Nodes visited:": 0, "Nodes skipped:": 0}
 	
-	def dfs(board, solution = []):
+	def dfs(board, solution = [], board_path = [board]):
 		""" Function uses DFS algorithm to find solution. """
+
+		print("Solution length:", len(solution))
+		for move in solution:
+			print(move[0], "->", move[1])
+		print("\n\n")
 
 		# Check if board is in goal state
 		if is_solution(board):
-			stats["End states found:"] += 1
+			stats["End states:"] += 1
 			stats["Nodes visited:"] = len(visited)
 			print("\nSolution:")
-			for x in solution:
-				print(x[0], "->", x[1])
+			for move in solution:
+				print(move[0], "->", move[1])
 			return True
 
 		possible_moves = generate_moves(board)
 		if len(possible_moves) == 0:
-			stats["End states found:"] += 1
+			stats["End states:"] += 1
 
 		# Generate the child nodes.
 		child_nodes = []
@@ -103,13 +116,13 @@ def find_solution(board):
 		for (move, child) in child_nodes:
 			hash_code = board_code(child)
 			if hash_code in visited:
-				stats["Copies bypassed:"] += 1
+				stats["Nodes skipped:"] += 1
 
 			if hash_code not in visited:
 				visited.add(hash_code)
-				output = dfs(child, solution + [move])
-				if output:
-					return output
+				p = dfs(child, solution + [move], board_path + [child])
+				if p:
+					return p
 
 	# Output data.
 	t = perf_counter()
@@ -123,5 +136,12 @@ def find_solution(board):
 	print("Runtime:", perf_counter() - t, "seconds\n")
 	print("="*65)
 	
+
 find_solution(board)
+
+
+
+
+
+
 
