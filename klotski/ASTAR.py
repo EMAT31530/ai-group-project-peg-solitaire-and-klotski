@@ -1,5 +1,6 @@
 import numpy as np
 import time
+# translate function: converts a state in string form to a two-dimensional matrix form
 def transtate(state):
     np_state = np.zeros((5,4))
     assert len(state) == 20, 'error'
@@ -15,7 +16,8 @@ def transtate(state):
         j = int(k % 4)
         np_state[i][j] = state_dict[state[k]]
     return np_state
-
+    
+# Convert a two-dimensional matrix form of state to a string form
 def statetrans(np_state):
     state = ""
     dict_state = dict()
@@ -30,12 +32,29 @@ def statetrans(np_state):
             state = state + dict_state[np_state[i][j]]
     return state 
 
+# Judgement positions are also not out of bounds, e.g. rows over 5 or columns less than 0
 def bound(row, column):
     if row<5 and row>=0 and column < 4 and column >=0:
         return True
     else:
         return False
 
+# A* algorithm is a heuristic to find a solution, and what it finds is not necessarily the optimal solution.
+# The cost of each node in the A* algorithm is divided into two parts, one for f and one for h. f is the cost of getting from the initial state to the current state
+# This is exact, and can be calculated using the number of iterations, while g is the cost from the current state to the end point, which we can only estimate, but not get an exact value for g.
+# The core of the implementation of the A* algorithm is the selection of g and the analysis of state changes
+
+
+
+# In each iteration, the current state generates many states, as each state requires the use of spaces. Let's take the theme of spaces and change the states
+# Three cases, one where two spaces are not adjacent, then they can be swapped with 1*1's, or 2*1's can be made to move up and down one frame, or 1*2's can be made to move left and right one frame
+# One is where two spaces are adjacent to each other as 2*1 spaces, then they can either swap with 2*1's or move 2*2's
+# One is where two spaces are next to each other as 1*2 spaces, then they can either swap with 1*2's or move 2*2's
+# The latter two cases also include the first, i.e. the state extended by case 1 also needs to be added to case 2 or 3.
+
+
+
+# Situation 1
 def state0(row, column, np_state):
     ex_states = []
     rcs = []
@@ -81,7 +100,8 @@ def ppp(np_state2, np_state):
         print('Error')
         print(np_state)
         print(np_state2)
-                
+
+# Case 3, subsequent state of the state (subsequent step)
 def state12(row, column, np_state):
     #left
     ex_states = []
@@ -128,6 +148,7 @@ def state12(row, column, np_state):
     
     return ex_states
 
+# Case II, subsequent state of the state (subsequent step)
 def state21(row, column, np_state):
     # up
     ex_states = []
@@ -173,7 +194,8 @@ def state21(row, column, np_state):
         ex_states.append(np_state2)
         #ppp(np_state2, np_state)
     return ex_states
-    
+
+# For an input state, analyse all his subsequent states (subsequent step)
 def state_ex(np_state):
     ex_states = []
     index0, index1 = np.where(np_state==0)
@@ -199,10 +221,12 @@ def state_ex(np_state):
     ex_states = ex_states + state0(index0[1], index1[1], np_state.copy())
     return ex_states
     
+# g function is designed so that we directly weight the current distance between Cao Cao and the exit as g. We think it's harder to make Cao Cao move up and down, so the distance up and down is weighted higher
 def heu(np_state):
     index0, index1  = np.where(np_state==22)
     return (10*abs(np.max(index0) - 4) + abs(np.min(index1)-1))
 
+# Check the current status for the number of pawns, generals, Cao Cao and spaces
 def check(np_state, father_dict):
     #print(np_state)
     #str_state = statetrans(np_state)
@@ -213,24 +237,28 @@ def check(np_state, father_dict):
     assert len(np.where(np_state==211)[0]) == 4
     assert len(np.where(np_state==210)[0]) == 4
     assert len(np.where(np_state==11)[0]) == 4
-    
+
+# Main functions
 def main(init_state):
     t0 = time.time()
-    open_dict = {}
-    f_value_dict = {}
-    close_dict = {}
-    np_init_state = transtate(init_state)
-    open_dict[init_state] = 0 + heu(np_init_state)
+    open_dict = {}  # Storage candidate status
+    f_value_dict = {}  # Store the f-value of each state
+    close_dict = {} # Store the traversed state
+    np_init_state = transtate(init_state) # trans for the initial state
+    open_dict[init_state] = 0 + heu(np_init_state) 
     f_value_dict[init_state] = 0
     flag = True
     counts = 0
     #time_cost = time.time()
-    while(flag):
+    while(flag):  # Iterate through open_dict until a solution is found, picking the least costly state each time
+    # For each traversed state, analyse whether it is a solution; find its subsequent state and add it to open_dict.
+    #(add states to determine if they have been analysed, if they have been analysed, they are not added);
+    # Throw the traversed state into close_dict
         if len(open_dict.keys()) == 0:
             print('failed')
             flag = False
             break 
-        #排序
+        #Sort
         sort_states = sorted(open_dict.items(),key = lambda x:x[1],reverse = False)
         state = sort_states[0][0]
         #state = list(open_dict.keys())[0]
