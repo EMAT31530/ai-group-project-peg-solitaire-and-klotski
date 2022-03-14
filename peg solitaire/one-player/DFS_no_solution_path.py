@@ -67,8 +67,9 @@ def find_solution(board):
 			for element in row:
 				if element == 1:
 					count += 1
-		# if count == 1:
-		if count == 1 and board[3, 3] == 1:
+		if count == 1:
+		# Include instead if considering specific end location to solution
+		# if count == 1 and board[3, 3] == 1:
 			print("\nSolution found!\n\nFinal board:")
 			print(board)
 			return True
@@ -83,15 +84,12 @@ def find_solution(board):
 	data = {"Nodes visited:": 0, "Nodes skipped:": 0, "End states:": 0}
 	branch_factors = []
 	
-	def dfs(board, solution = [], board_path = [board]):
+	def dfs(board):
 		""" Function uses DFS algorithm to find solution. """
 		# Check if board is in goal state
 		if is_solution(board):
 			data["Nodes visited:"] = len(visited)
 			data["End states:"] += 1
-			print("\nSolution:")
-			for move in solution:
-				print(move[0], "->", move[1])
 			return True
 
 		possible_moves = generate_moves(board)
@@ -102,14 +100,6 @@ def find_solution(board):
 		child_nodes = []
 		for move in possible_moves:
 			child_nodes.append((move, update_board(np.copy(board), move)))
-
-		# Include to output average branching factor
-		# count = 0
-		# for (move, child) in child_nodes:
-		# 	if board_code(child) not in visited:
-		# 		count += 1
-		# if count != 0:
-		# 	branch_factors.append(count)
 		
 		for (move, child) in child_nodes:
 			hash_code = board_code(child)
@@ -118,7 +108,7 @@ def find_solution(board):
 
 			if hash_code not in visited:
 				visited.add(hash_code)
-				p = dfs(child, solution + [move], board_path + [child])
+				p = dfs(child)
 				if p:
 					return p
 

@@ -1,16 +1,8 @@
 import numpy as np
 from time import perf_counter
+import resource
 
-# board = np.array([
-# 	[-1,-1, 1, 1, 1,-1,-1],
-# 	[-1,-1, 1, 1, 1,-1,-1],
-# 	[-1, 1, 1, 1, 1, 1, 1],
-# 	[ 1, 1, 1, 0, 1, 1, 1],
-# 	[ 1, 1, 1, 1, 1, 1, 1],
-# 	[-1,-1, 1, 1, 1,-1,-1],
-# 	[-1,-1, 1, 1, 1,-1,-1]
-# 	])
-
+# 5x5
 board = np.array([
 	[1, 1, 1, 1, 1],
 	[1, 1, 1, 1, 1],
@@ -43,8 +35,7 @@ def calculate_moves(board, x, y):
 	return possible_moves
 
 def generate_moves(board):
-	"""
-	"""
+	""" Finds all possible moves in a given board state. """
 	possible_moves = []
 	for x, y_values in enumerate(board):
 		for y, state in enumerate(y_values):
@@ -56,9 +47,7 @@ def generate_moves(board):
 	return possible_moves
 
 def update_board(board, move):
-	"""
-	move = ((x_old, y_old), (x_new, y_new))
-	"""
+	""" move = ((x_old, y_old), (x_new, y_new)) """
 	# Remove peg from old position
 	board[move[0][0]][move[0][1]] = 0
 	# Add removed peg in empty position
@@ -74,7 +63,9 @@ def is_solution(board):
 		for element in row:
 			if element == 1:
 				count += 1
-	if count == 1: # and board[3, 3] == 1
+	if count == 1:
+	# Include instead if considering specific end location to solution
+	# if count == 1 and board[3, 3] == 1:
 		print("\nSolution found!\n")
 		print(board)
 		return True
@@ -82,44 +73,43 @@ def is_solution(board):
 		return False
 
 def board_code(board):
-	"""
-	Function creates unique hash code for each board state.
-	"""
+	""" Function creates unique hash code for each board state. """
 	return hash(tuple(map(tuple, board)))
-
-def symmetric_boards(board):
-	"""
-	Returns list of equvalent boards under symmetry.
-	"""
-	return [np.rot90(np.copy(board), i) for i in range(1, 4)]
 
 #######################################################################################################
 
 visited = {board_code(board)}
-stats = {"count": 0}
+data = {"count": 0, "Nodes skipped:": 0, "End states:": 0}
 print("Nodes on level 0:", 1)
 
 def bfs(queue):
 	nodes = []
 	while queue:
 		current_board = queue.pop(0)
-		if is_solution(current_board):
-			print("\nNodes visited:", len(visited))
-			return True
-
 		possible_moves = generate_moves(current_board)
+		if len(possible_moves) == 0:
+			data["End states:"] += 1
+			if is_solution(current_board):
+				print("\nNodes visited:", len(visited))
+				print("Nodes skipped:", data["Nodes skipped:"])
+				print("End states:", data["End states:"])
+				return True
+			
 		child_nodes = []
 		for move in possible_moves:
 			child_nodes.append(update_board(np.copy(current_board), move))
 			
 		for child in child_nodes:
 			hash_code = board_code(child)
+			if hash_code in visited:
+				data["Nodes skipped:"] += 1
+
 			if hash_code not in visited:
 				visited.add(hash_code)
 				nodes.append(child)
 
-	stats["count"] += 1
-	print("Nodes on level " + str(stats["count"]) + ":", len(nodes))
+	data["count"] += 1
+	print("Nodes on level " + str(data["count"]) + ":", len(nodes))
 
 	if len(nodes) == 0:
 		print("Search found no solution!")
@@ -134,7 +124,8 @@ def bfs(queue):
 t = perf_counter()
 bfs([board])
 print("Runtime:", perf_counter() - t, "\n")
-
+r = resource.getrusage(resource.RUSAGE_SELF)
+print(f'Memory usage (MB): {r.ru_maxrss / 1000000}')
 
 # This method is far too slow to solve the typical 7x7 English board setup. However, it can solve
 # a smaller and simpler version.
